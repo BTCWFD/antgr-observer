@@ -10,7 +10,7 @@ export class BridgeClient {
     }
 
     connect() {
-        const token = "antgr_secret_v1_99"; // Note: In Phase 3 this will be a handshake
+        const token = State.authKey;
         try {
             this.socket = new WebSocket(`${this.url}?token=${token}`);
 
@@ -29,6 +29,9 @@ export class BridgeClient {
                     Bus.emit('ai_response', data);
                 } else if (data.type === 'PROCESS_LOG') {
                     Bus.emit('devops_log', data);
+                } else if (data.type === 'CODEBASE_INDEX') {
+                    State.codebaseIndex = data.files;
+                    Bus.emit('log', { msg: `Semantic: Indexed ${Object.keys(data.files).length} files. AI context primed.`, type: 'system' });
                 } else if (data.type === 'SYSTEM') {
                     Bus.emit('log', { msg: `Bridge: ${data.msg}`, type: 'system' });
                 }
@@ -96,6 +99,12 @@ export class BridgeClient {
     stopTask() {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({ type: 'STOP_TASK' }));
+        }
+    }
+
+    scanCodebase() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ type: 'SCAN_CODEBASE' }));
         }
     }
 }

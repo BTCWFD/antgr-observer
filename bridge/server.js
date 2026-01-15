@@ -2,6 +2,8 @@ const { WebSocketServer } = require('ws');
 const os = require('os');
 const { execSync } = require('child_process');
 const http = require('http');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3002;
@@ -146,6 +148,38 @@ wss.on('connection', (ws, req) => {
                         error: err
                     }));
                 }
+            } else if (request.type === 'SCAN_CODEBASE') {
+                console.log(`[ANTGR-BRIDGE] Indexing codebase context...`);
+                const rootDir = path.join(__dirname, '..');
+                const fileMap = {};
+
+                const scanDir = (dir) => {
+                    const files = fs.readdirSync(dir);
+                    files.forEach(file => {
+                        const fullPath = path.join(dir, file);
+                        const relPath = path.relative(rootDir, fullPath);
+
+                        if (file === 'node_modules' || file === '.git' || file === 'dist' || file === 'bridge' || file === 'icons') return;
+
+                        const stats = fs.statSync(fullPath);
+                        if (stats.isDirectory()) {
+                            scanDir(fullPath);
+                        } else if (['.js', '.html', '.css', '.md'].includes(path.extname(file))) {
+                            fileMap[relPath] = fs.readFileSync(fullPath, 'utf8').substring(0, 5000); // Sample first 5k chars
+                        }
+                    });
+                };
+
+                try {
+                    scanDir(rootDir);
+                    ws.send(JSON.stringify({
+                        type: 'CODEBASE_INDEX',
+                        files: fileMap
+                    }));
+                } catch (err) {
+                    console.error('[ANTGR-BRIDGE] Scan error:', err);
+                }
+
             } else if (request.type === 'START_TASK') {
                 if (activeProcess) {
                     ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task already running.' }));

@@ -72,6 +72,11 @@ async function init() {
         if (result.observerState) {
             Object.assign(State, result.observerState);
             State.isScanning = false;
+
+            // Sync UI with state
+            const authInput = document.getElementById('auth-token-input');
+            if (authInput) authInput.value = State.authKey || "";
+
             updateUI();
             renderPlugins();
             Bus.emit('log', { msg: 'System core recovered from storage.', type: 'system' });
@@ -81,7 +86,20 @@ async function init() {
         }
     });
 
+    // Security Token Listener
+    const authInput = document.getElementById('auth-token-input');
+    if (authInput) {
+        authInput.addEventListener('change', (e) => {
+            State.authKey = e.target.value;
+            Bus.emit('log', { msg: 'Security: Token updated. Re-handshaking with Bridge...', type: 'warning' });
+            Bridge.connect();
+            // The scan will be triggered by the connection event or we can delay it
+            setTimeout(() => Bridge.scanCodebase(), 1000);
+        });
+    }
+
     Bridge.connect();
+    setTimeout(() => Bridge.scanCodebase(), 2000); // Initial scan
     document.getElementById('refresh-btn').addEventListener('click', runWorkspaceSync);
 
     // Watch for external status updates

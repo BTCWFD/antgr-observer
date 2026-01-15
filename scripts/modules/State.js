@@ -12,5 +12,7 @@ export const State = {
     telemetry: { cpu: 0, memory: 0 },
     recommendations: [],
     isTaskRunning: false,
-    devopsLogs: []
+    devopsLogs: [],
+    authKey: "antgr_secret_v1_99", // Default for initial connection
+    codebaseIndex: {}
 };
