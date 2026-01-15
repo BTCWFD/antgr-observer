@@ -54,14 +54,15 @@ The Bridge can be run in two modes:
 3.  Run `npm start` to initialize the stream.
 
 > [!IMPORTANT]
-> **Brain Bridge (Phase 4)** requires **Ollama** (ollama.com) installed and running locally with the `llama3` model. The bridge acts as a secure AI proxy.
+> **Brain Bridge (Phase 4)** requires **Ollama** installed and running with the `phi3:mini` model (optimized for RAM). The bridge acts as a secure AI proxy on **Port 3002**.
 
 ## Technical Specifications
 
 | Objective | Specification |
 |-----------|---------------|
 | Manifest Protocol | Version 3 |
-| Backend Bridge | Node.js / Standalone EXE |
+| Backend Bridge | Standalone EXE (Port 3002) |
+| AI Engine | Ollama (phi3:mini) |
 | Security | Auth Token (Enforced) |
 | Design Language | Mission Control (Neon/Glassmorphism) |
 | Performance Target | < 50ms UI Latency |

@@ -3,10 +3,10 @@ const os = require('os');
 const { execSync } = require('child_process');
 const http = require('http');
 
-const PORT = 3001;
+const PORT = 3002;
 const AUTH_TOKEN = "antgr_secret_v1_99"; // Simple security layer
 const OLLAMA_URL = "http://localhost:11434/api/generate";
-const DEFAULT_MODEL = "llama3"; // or "phi3", "mistral", etc.
+const DEFAULT_MODEL = "phi3:mini"; // Light version for optimized performance
 
 const wss = new WebSocketServer({ port: PORT });
 
