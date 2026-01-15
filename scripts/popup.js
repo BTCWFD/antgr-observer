@@ -4,6 +4,7 @@ const State = {
     progress: 0,
     tokens: 0,
     cost: 0,
+    securityScore: 100,
     logs: []
 };
 
@@ -28,18 +29,28 @@ async function runWorkspaceSync() {
 
     const sequence = [
         { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450 },
+        { msg: 'Checking Ethical Guardrails (Policy v2.1)...', type: 'system', delay: 600, tokens: 200 },
+        { msg: 'Analyzing code for prompt injection risks...', type: 'default', delay: 1200, tokens: 500 },
         { msg: 'Hashing directory tree for adk-python...', type: 'default', delay: 800, tokens: 1200 },
-        { msg: 'Refactoring metadata cache...', type: 'default', delay: 600, tokens: 800 },
-        { msg: 'Checking git integrity [Branch: main]', type: 'success', delay: 1000, tokens: 150 },
+        { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15 },
+        { msg: 'Verifying Compliance [Agent Integrity: OK]', type: 'success', delay: 1000, tokens: 150 },
         { msg: 'Optimizing artifact observation layer...', type: 'system', delay: 500, tokens: 2100 }
     ];
+
+    State.securityScore = 100;
 
     for (const step of sequence) {
         await wait(step.delay);
         addLogEntry(step.msg, step.type);
         State.progress += (100 / sequence.length);
         State.tokens += step.tokens;
-        State.cost = (State.tokens / 1000) * 0.002; // Simulando $0.002 per 1k tokens
+        State.cost = (State.tokens / 1000) * 0.002;
+
+        if (step.risk) {
+            State.securityScore -= step.risk;
+            addLogEntry(`SECURITY THREAT: Potential credential leak detected!`, 'warning');
+        }
+
         updateUI();
 
         if (State.tokens > 4000) {
@@ -60,11 +71,17 @@ function updateUI() {
     const text = document.querySelector('.task-percent');
     const tokenCount = document.getElementById('token-count');
     const costValue = document.getElementById('cost-value');
+    const securityScore = document.getElementById('security-score');
 
     fill.style.width = `${State.progress}%`;
     text.textContent = `${Math.round(State.progress)}%`;
     tokenCount.textContent = State.tokens.toLocaleString();
     costValue.textContent = `$${State.cost.toFixed(3)}`;
+    securityScore.textContent = `${State.securityScore}%`;
+
+    // Color dinámico para el score de seguridad
+    if (State.securityScore < 90) securityScore.style.color = '#ffaa00';
+    if (State.securityScore < 70) securityScore.style.color = '#ff4444';
 }
 
 function addLogEntry(message, type = 'default') {
