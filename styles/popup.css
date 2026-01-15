@@ -169,6 +169,51 @@ h2 {
   contain: content;
 }
 
+.mission-metrics {
+  margin-bottom: 24px;
+}
+
+.metrics-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.metric-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 10px;
+  border-radius: 6px;
+  border: 1px solid var(--border-glass);
+  text-align: center;
+  transition: transform 0.3s ease;
+}
+
+.metric-card:hover {
+  transform: translateY(-2px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: var(--neon-violet);
+}
+
+.metric-label {
+  display: block;
+  font-size: 0.55rem;
+  color: var(--text-dim);
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  display: block;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.9rem;
+  color: var(--neon-violet);
+  text-shadow: 0 0 10px rgba(188, 0, 255, 0.4);
+}
+
+.mission-log {
+  margin-top: 20px;
+}
+
 .log-entry {
   margin-bottom: 6px;
   color: var(--text-dim);

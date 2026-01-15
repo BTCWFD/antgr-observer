@@ -1,11 +1,14 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <title>Antigravity Mission Control</title>
   <link rel="stylesheet" href="styles/popup.css">
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
   <div class="mission-control">
     <header>
@@ -31,6 +34,20 @@
         </div>
       </section>
 
+      <section class="mission-metrics">
+        <h2>Mission Metrics</h2>
+        <div class="metrics-grid">
+          <div class="metric-card">
+            <span class="metric-label">Token Usage</span>
+            <span class="metric-value" id="token-count">0</span>
+          </div>
+          <div class="metric-card">
+            <span class="metric-label">Est. Cost</span>
+            <span class="metric-value" id="cost-value">$0.00</span>
+          </div>
+        </div>
+      </section>
+
       <section class="mission-log">
         <h2>MISSION CONTROL LOG</h2>
         <div id="log-container">
@@ -46,4 +63,5 @@
   </div>
   <script src="scripts/popup.js"></script>
 </body>
+
 </html>
