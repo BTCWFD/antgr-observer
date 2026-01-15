@@ -1,43 +1,58 @@
 <div align="center">
-  <img src="icons/logo.png" alt="Antigravity Observer Logo" width="600">
+  <img src="icons/logo.png" alt="Antigravity Observer Logo" width="120">
   
-  # Antigravity Observer
-  **Next-Generation Strategic Mission Control for Agentic Operations**
+  # ANTIGRAVITY OBSERVER
+  **Enterprise-Grade Mission Control for Autonomous Agent Operations**
 </div>
 
-## Overview
+---
 
-Antigravity Observer is a high-performance Chrome Extension designed to monitor, analyze, and optimize local agentic workflows. It provides real-time visibility into mission progress, resource consumption, and security integrity, enabling a "Mission Control" experience for advanced developers and autonomous systems.
+## Executive Summary
 
-## Key Features
+Antigravity Observer is a specialized observation and orchestration platform designed for real-time monitoring of agentic workflows. By providing deep-stream visibility into token consumption, security integrity, and predictive performance, it empowers developers to govern local autonomous systems with unparalleled precision.
 
-### Mission Control Interface
-- **Active Mission Tracking**: Real-time progress monitoring of complex directory scans and workspace synchronizations.
-- **Predictive Intelligence**: Early detection of resource bottlenecks and model optimization suggestions.
-- **Security Guardrails**: Automated scanning for credential leaks and adherence to ethical AI policies.
-- **Performance Metrics**: Detailed breakdown of token usage, estimated operational costs, and system latency.
+## Core Capabilities
 
-### Plugin Architecture
-- Seamless integration with external services through a robust registry system.
-- Support for GitHub, Slack, and legacy enterprise connectors.
+### 1. Reactive Mission Intelligence
+* **Dynamic Event Stream**: Real-time throughput monitoring via a centralized EventBus architecture.
+* **Predictive Bottleneck Analysis**: Heuristic-based forecasting of system latency and resource constraints.
+* **Token ROI Monitoring**: Granular tracking of model costs with automated threshold alerts.
+
+### 2. Autonomous Governance & Security
+* **Moral Security Layer**: Integrated pattern matching for PII and credential leak prevention.
+* **Ethical Guardrails**: Real-time validation against agent interaction policies.
+* **Cryptographic Integrity**: Verification of workspace synchronizations and artifact generation.
+
+### 3. Extensible Plugin Registry
+* Standardized interface for integrating third-party orchestration services.
+* Decoupled architecture allowing for "hot-swappable" monitoring modules.
+
+## Architecture Guidelines
+
+The system is built upon a high-performance, low-latency JavaScript core optimized for Chrome's Manifest V3 standard. It utilizes a reactive state management pattern to ensure UI synchronization without blocking mission-critical agent threads.
+
+## Implementation & Deployment
+
+### Local Environment Setup
+1. Clone the repository to a secure directory.
+2. Navigate to `chrome://extensions` in a Chromium-based browser.
+3. Enable **Developer Mode**.
+4. Select **Load unpacked** and point to the project root.
+
+### Verification Flow
+Execution status can be verified through the **Mission Control Log** (MCL) available in the extension's primary viewport.
 
 ## Technical Specifications
 
-- **Manifest Version**: 3 (Chrome Extension Standards)
-- **Core Engine**: Optimized JavaScript architecture with event-driven updates.
-- **Design System**: High-fidelity neon aesthetic with glassmorphism elements.
+| Objective | Specification |
+|-----------|---------------|
+| Manifest Protocol | Version 3 |
+| Design Language | Mission Control (Neon/Glassmorphism) |
+| State Management | Reactive EventBus |
+| Performance Target | < 50ms UI Latency |
 
-## Installation and Setup
+---
 
-1. Clone this repository to your local machine.
-2. Open Chrome and navigate to `chrome://extensions`.
-3. Enable **Developer Mode** in the top-right corner.
-4. Click **Load unpacked** (Cargar descomprimida).
-5. Select the directory containing this project.
-
-## Security and Compliance
-
-The system implements a multi-layer security scan during every workspace sync, including:
-- Pattern-based credential leak detection.
-- Ethical policy validation (Policy v2.1).
-- Compliance status reporting for agent integrity.
+<div align="center">
+  <sub>Propiedad de Antigravity AI Operations. Todos los derechos reservados.</sub>
+</div>

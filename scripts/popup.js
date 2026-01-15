@@ -104,9 +104,9 @@ class MissionLogger {
         const time = new Date().toLocaleTimeString([], { hour12: false });
         entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${message}</span>`;
 
-        this.container.prepend(entry);
-        if (this.container.children.length > this.maxEntries) this.container.lastElementChild.remove();
-        this.container.scrollTop = 0;
+        this.container.appendChild(entry);
+        if (this.container.children.length > this.maxEntries) this.container.firstElementChild.remove();
+        this.container.scrollTop = this.container.scrollHeight;
 
         // Security scanning integration
         if (type !== 'system') {
@@ -121,13 +121,54 @@ class MissionLogger {
     }
 }
 
-let Logger, Terminal;
+/**
+ * CTOAuditor: High-level technical auditor agent.
+ */
+class CTOAuditor {
+    constructor(containerId, statusId) {
+        this.container = document.getElementById(containerId);
+        this.statusEl = document.getElementById(statusId);
+        this.active = false;
+
+        Bus.on('cto_audit_start', () => this.start());
+        Bus.on('cto_audit_stop', () => this.stop());
+        Bus.on('cto_insight', (data) => this.report(data.type, data.msg));
+    }
+
+    start() {
+        this.active = true;
+        this.statusEl.textContent = 'SCANNING...';
+        this.statusEl.classList.add('pulse');
+        this.container.innerHTML = '';
+    }
+
+    stop() {
+        this.active = false;
+        this.statusEl.textContent = 'IDLE';
+        this.statusEl.classList.remove('pulse');
+    }
+
+    report(type, message) {
+        if (!this.active) return;
+        const alert = document.createElement('div');
+        alert.className = 'cto-alert';
+        alert.innerHTML = `
+            <span class="cto-alert-type">[CTO: ${type}]</span>
+            <span class="cto-alert-msg">${message}</span>
+        `;
+        this.container.prepend(alert);
+        if (this.container.children.length > 2) this.container.lastElementChild.remove();
+    }
+}
+
+let Logger, Terminal, Auditor;
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
     Logger = new MissionLogger('log-container');
     Terminal = new TerminalManager('terminal-container');
+    Auditor = new CTOAuditor('cto-panel', 'cto-status');
 
     const refreshBtn = document.getElementById('refresh-btn');
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -212,14 +253,15 @@ async function runWorkspaceSync() {
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'SCANNING...';
     Terminal.clear();
+    Bus.emit('cto_audit_start');
 
     const sequence = [
         { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450, term: 'IO_INIT_0xFA32' },
-        { msg: 'Checking Ethical Guardrails...', type: 'system', delay: 600, tokens: 200, term: 'POLICY_MV_21_OK' },
-        { msg: 'Analyzing prompt injection risks...', type: 'default', delay: 1200, tokens: 500, term: 'TOKEN_SCAN_RUN' },
-        { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15, term: 'CRIT_SEC_WARN' },
-        { msg: 'Predicting resource bottlenecks...', type: 'system', delay: 1000, tokens: 400, term: 'RESC_LENT_0.02' },
-        { msg: 'Optimizing artifact observation...', type: 'system', delay: 500, tokens: 2100, term: 'GEMINI_SYNC_100%' }
+        { msg: 'Checking Ethical Guardrails...', type: 'system', delay: 600, tokens: 200, term: 'POLICY_MV_21_OK', cto: { type: 'Governance', msg: 'Ethical patterns match Global AI Policy v2.' } },
+        { msg: 'Analyzing prompt injection risks...', type: 'default', delay: 1200, tokens: 500, term: 'TOKEN_SCAN_RUN', cto: { type: 'Security', msg: 'Zero-day injection vectors audited.' } },
+        { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15, term: 'CRIT_SEC_WARN', cto: { type: 'Risk', msg: 'Critical PII leak detected in local buffer.' } },
+        { msg: 'Predicting resource bottlenecks...', type: 'system', delay: 1000, tokens: 400, term: 'RESC_LENT_0.02', cto: { type: 'Scalability', msg: 'O(n²) detected in artifact parser.' } },
+        { msg: 'Optimizing artifact observation...', type: 'system', delay: 500, tokens: 2100, term: 'GEMINI_SYNC_100%', cto: { type: 'Architecture', msg: 'Event-driven sync pipeline verified.' } }
     ];
 
     State.securityScore = 100;
@@ -230,6 +272,10 @@ async function runWorkspaceSync() {
         await wait(step.delay);
         Bus.emit('log', { msg: step.msg, type: step.type });
         Terminal.stream(step.term);
+
+        if (step.cto) {
+            Bus.emit('cto_insight', step.cto);
+        }
 
         State.progress += (100 / sequence.length);
         State.tokens += step.tokens;
@@ -250,6 +296,7 @@ async function runWorkspaceSync() {
         </div>
     `;
 
+    Bus.emit('cto_audit_stop');
     addLogEntry('Sync completed. All systems nominal.', 'success');
     State.isScanning = false;
     State.progress = 100;
