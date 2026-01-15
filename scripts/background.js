@@ -43,4 +43,26 @@ function notifyUser(title, message) {
 
 chrome.runtime.onInstalled.addListener(() => {
     notifyUser('Antigravity Observer', 'Sistema de monitoreo activado en local.');
+    launchBridge();
 });
+
+// Launch Bridge via Native Messaging (Auto-start)
+function launchBridge() {
+    console.log('[ANTGR] Attempting to auto-start bridge...');
+    try {
+        const port = chrome.runtime.connectNative('com.antigravity.observer.bridge');
+        port.onMessage.addListener((msg) => {
+            console.log('[ANTGR] Native Bridge Heartbeat:', msg);
+        });
+        port.onDisconnect.addListener(() => {
+            console.log('[ANTGR] Native connection lost. Bridge may have closed.');
+        });
+    } catch (e) {
+        console.error('[ANTGR] Native launch failed:', e);
+    }
+}
+
+// Ensure launch on startup
+chrome.runtime.onStartup.addListener(launchBridge);
+// Fire once immediately
+launchBridge();

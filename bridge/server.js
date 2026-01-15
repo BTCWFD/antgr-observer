@@ -2,11 +2,17 @@ const { WebSocketServer } = require('ws');
 const os = require('os');
 const { execSync } = require('child_process');
 const http = require('http');
+require('dotenv').config();
 
-const PORT = 3002;
-const AUTH_TOKEN = "antgr_secret_v1_99"; // Simple security layer
-const OLLAMA_URL = "http://localhost:11434/api/generate";
-const DEFAULT_MODEL = "phi3:mini"; // Light version for optimized performance
+const PORT = process.env.PORT || 3002;
+const AUTH_TOKEN = process.env.AUTH_TOKEN;
+const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
+const DEFAULT_MODEL = process.env.DEFAULT_MODEL || "phi3:mini";
+
+if (!AUTH_TOKEN) {
+    console.error('[CRITICAL] AUTH_TOKEN not found in .env. Shutting down.');
+    process.exit(1);
+}
 
 const wss = new WebSocketServer({ port: PORT });
 
@@ -31,6 +37,7 @@ function getDiskUsage() {
 }
 
 async function callOllama(prompt) {
+    console.log(`[ANTGR-BRIDGE] Calling Ollama for prompt: ${prompt.slice(0, 30)}...`);
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({
             model: DEFAULT_MODEL,
@@ -45,7 +52,7 @@ async function callOllama(prompt) {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Content-Length': data.length
+                'Content-Length': Buffer.byteLength(data)
             }
         };
 
@@ -55,14 +62,20 @@ async function callOllama(prompt) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(body);
+                    console.log(`[ANTGR-BRIDGE] Ollama response received.`);
                     resolve(parsed.response);
                 } catch (e) {
+                    console.error(`[ANTGR-BRIDGE] Ollama Parse Error:`, e);
                     reject('Ollama Parse Error');
                 }
             });
         });
 
-        req.on('error', (e) => reject(`Ollama Connection Error: ${e.message}`));
+        req.on('error', (e) => {
+            console.error(`[ANTGR-BRIDGE] Ollama Connection Error:`, e.message);
+            reject(`Ollama Connection Error: ${e.message}`);
+        });
+
         req.write(data);
         req.end();
     });
@@ -116,12 +129,14 @@ wss.on('connection', (ws, req) => {
                     ws.send(JSON.stringify({
                         type: 'LLM_RESPONSE',
                         agent: request.agent,
+                        source: 'LOCAL',
                         response: response
                     }));
                 } catch (err) {
                     ws.send(JSON.stringify({
                         type: 'LLM_RESPONSE',
                         agent: request.agent,
+                        source: 'LOCAL',
                         error: err
                     }));
                 }
@@ -143,3 +158,29 @@ process.on('SIGINT', () => {
         process.exit();
     });
 });
+
+// --- Native Messaging Protocol Support ---
+// This allows Chrome to launch the EXE directly via stdio
+process.stdin.on('readable', () => {
+    let input = process.stdin.read();
+    if (input) {
+        // We just ignore the content for now, but keeping the pipe open
+        // prevents Chrome from killing the process.
+    }
+});
+
+// Send a simple "Hello" in Native Messaging format to keep Chrome happy
+function sendNativeMessage(obj) {
+    const payload = Buffer.from(JSON.stringify(obj));
+    const header = Buffer.alloc(4);
+    header.writeUInt32LE(payload.length, 0);
+    process.stdout.write(header);
+    process.stdout.write(payload);
+}
+
+// Optional: Identify as native host
+if (process.send || !process.stdout.isTTY) {
+    setInterval(() => {
+        sendNativeMessage({ type: 'HEARTBEAT', status: 'ONLINE' });
+    }, 30000);
+}

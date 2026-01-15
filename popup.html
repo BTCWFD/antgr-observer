@@ -39,64 +39,84 @@
         </div>
       </section>
 
-      <section class="mission-metrics">
-        <h2>Mission Metrics</h2>
-        <div class="metrics-grid">
-          <div class="metric-card">
-            <span class="metric-label">Token Usage</span>
-            <span class="metric-value" id="token-count">0</span>
+      <div class="mission-node expanded">
+        <div class="node-header">
+          <div class="node-title">Mission Metrics</div>
+        </div>
+        <div class="node-content">
+          <div class="metrics-grid">
+            <div class="metric-card">
+              <span class="metric-label">Tokens</span>
+              <span class="metric-value" id="token-count">0</span>
+            </div>
+            <div class="metric-card">
+              <span class="metric-label">Cost</span>
+              <span class="metric-value" id="cost-value">$0.00</span>
+            </div>
+            <div class="metric-card security">
+              <span class="metric-label">Security</span>
+              <span class="metric-value" id="security-score">100%</span>
+            </div>
           </div>
-          <div class="metric-card">
-            <span class="metric-label">Est. Cost</span>
-            <span class="metric-value" id="cost-value">$0.00</span>
+        </div>
+      </div>
+
+      <div class="mission-node">
+        <div class="node-header">
+          <div class="node-title">Predictive Insights</div>
+        </div>
+        <div class="node-content">
+          <div class="insights-container" id="insights-panel">
+            <div class="insight-placeholder">Waiting for scan completion...</div>
           </div>
-          <div class="metric-card security">
-            <span class="metric-label">Security Score</span>
-            <span class="metric-value" id="security-score">100%</span>
+          <div id="security-details" class="security-log" style="margin-top: 10px; font-size: 0.8rem; color: #ff5555;">
           </div>
         </div>
-      </section>
+      </div>
 
-      <section class="mission-insights">
-        <h2>Predictive Insights</h2>
-        <div class="insights-container" id="insights-panel">
-          <div class="insight-placeholder">Waiting for scan completion...</div>
+      <div class="mission-node">
+        <div class="node-header cto">
+          <div class="node-title">CTO Live Audit</div>
+          <span class="badge" id="cto-status">IDLE</span>
         </div>
-        <div id="security-details" class="security-log" style="margin-top: 10px; font-size: 0.8rem; color: #ff5555;">
+        <div class="node-content">
+          <div class="cto-container" id="cto-panel">
+            <div class="cto-placeholder">System monitoring in standby...</div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section class="cto-audit">
-        <div class="cto-header">
-          <span class="cto-title">CTO LIVE AUDIT</span>
-          <span class="cto-status" id="cto-status">IDLE</span>
+      <div class="mission-node">
+        <div class="node-header ux">
+          <div class="node-title">UX Mission Lab</div>
+          <span class="badge" id="ux-score">100%</span>
         </div>
-        <div class="cto-container" id="cto-panel">
-          <div class="cto-placeholder">System monitoring in standby...</div>
+        <div class="node-content">
+          <div class="ux-recommendations" id="ux-recommendations">
+            <div class="ux-placeholder">Awaiting UX scan...</div>
+          </div>
         </div>
-      </section>
+      </div>
 
-      <section class="ux-lab">
-        <div class="ux-header">
-          <span class="ux-title">UX MISSION LAB</span>
-          <span class="ux-score-badge" id="ux-score">100%</span>
+      <div class="mission-node">
+        <div class="node-header">
+          <div class="node-title">Mission Control Log</div>
         </div>
-        <div class="ux-recommendations" id="ux-recommendations">
-          <div class="ux-placeholder">Awaiting UX scan...</div>
+        <div class="node-content">
+          <div id="log-container" class="mission-log"></div>
         </div>
-      </section>
+      </div>
 
-      <section class="mission-log">
-        <h2>MISSION CONTROL LOG</h2>
-        <div id="log-container"></div>
-      </section>
-
-      <section class="live-terminal">
-        <h2>SYSTEM THROUGHPUT</h2>
-        <div id="terminal-container" class="terminal-box">
-          <div class="terminal-line">> AWAITING SIGNAL...</div>
+      <div class="mission-node">
+        <div class="node-header">
+          <div class="node-title">System Throughput</div>
         </div>
-      </section>
+        <div class="node-content">
+          <div id="terminal-container" class="terminal-box">
+            <div class="terminal-line">> AWAITING SIGNAL...</div>
+          </div>
+        </div>
+      </div>
 
       <footer>
         <button id="refresh-btn">SYNC WORKSPACE</button>
@@ -114,9 +134,7 @@
     </div> <!-- End Plugins View -->
   </div> <!-- End Mission Control -->
 
-  <script src="scripts/popup.js"></script>
+  <script type="module" src="scripts/popup.js"></script>
 </body>
-
-</html>
 
 </html>
