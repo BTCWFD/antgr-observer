@@ -2,73 +2,68 @@
   <img src="icons/logo.png" alt="Antigravity Observer Logo" width="120">
   
   # ANTIGRAVITY OBSERVER
-  **Enterprise-Grade Mission Control for Autonomous Agent Operations**
+**God-Tier AI Mission Control for Autonomous Agent Operations**
 </div>
 
 ---
 
 ## Executive Summary
 
-Antigravity Observer is a specialized observation and orchestration platform designed for real-time monitoring of agentic workflows. By providing deep-stream visibility into token consumption, system telemetry, and multi-agent auditing, it empowers developers to govern local autonomous systems with unparalleled precision.
+Antigravity Observer is an enterprise-grade orchestration platform for real-time monitoring and governance of autonomous systems. It transforms passive observation into **active mission control** via multi-agent intelligence and live DevOps actions.
 
-## Core Capabilities
+## God-Tier Capabilities
 
-### 1. Reactive Mission Intelligence
-*   **Dynamic Event Stream**: Real-time throughput monitoring via a centralized `EventBus` architecture.
-*   **Real Telemetry**: Live system monitoring (CPU/Memory) powered by a local Node.js WebSocket Bridge.
-*   **Token ROI Monitoring**: Granular tracking of model costs with automated threshold alerts.
+### 1. Dual-Brain Audit System 🧠🧠
+*   **Consensus Intelligence**: Simultanous auditing from Local LLMs (Ollama) and Remote Cloud Brains.
+*   **CTO Live Audit**: Real-time technical assessment with one-click **GitHub Issue Generation**.
+*   **UX Mission Lab**: Pro-active design optimization with direct deployment capabilities.
 
-### 2. Multi-Agent Auditing System
-*   **CTO Live Audit**: Real-time technical assessment of architecture, scalability, and security patterns.
-*   **UX Mission Lab**: A pro-active design agent that recommends smart integrations and deployment buttons to optimize visual harmony and efficiency.
+### 2. DevOps Mission Console 📟
+*   **Live Process Streaming**: Real-time stdout/stderr capture from local tasks (npm, docker, etc.) directly into the extension.
+*   **Task Orchestration**: Start and terminate local dev processes via the Bridge's secure `spawn` engine.
 
-### 3. Autonomous Governance & Security
-*   **Security Scanner**: Real-time pattern matching to detect and prevent PII and credential leaks (API keys, Private Keys, Slack tokens).
-*   **Ethical Guardrails**: Validation of agent behavior against global AI safety standards.
+### 3. Mission-Critical Security
+*   **Hardened Bridge**: Environment-based configuration (`.env`) with mandatory auth-token handshake.
+*   **Forensic Scanner**: High-speed pattern matching for credential leak detection.
+*   **Node Recycling**: Optimized DOM management for high-throughput logging.
 
 ## Architecture
 
-The system follows a decoupled, reactive architecture:
--   **Frontend**: Chrome Extension (Manifest V3) built with an asynchronous EventBus.
--   **Backend**: Local Agent Bridge (Node.js) providing direct system telemetry via WebSockets.
+The system features a **Surgical ES6 Modular Architecture**:
+-   **Frontend**: Asynchronous module system (State, Bus, Bridge, Agents, Logger).
+-   **Native Host**: Node.js WebSocket Bridge with **Native Messaging** auto-start capability.
+-   **AI Core**: Local Ollama (`phi3:mini`) + Remote Console Consensus.
 
-## Installation & Setup
+## Installation & Mission Sync
 
 ### 1. Chrome Extension
 1.  Navigate to `chrome://extensions`.
 2.  Enable **Developer Mode**.
-3.  Select **Load unpacked** and point to the project root.
+3.  **Load unpacked** pointing to the project root.
+4.  **Important**: Note your Extension ID for the host manifest.
 
-### 2. Local Agent Bridge (Telemetry Engine)
+### 2. Register Native Host (Auto-Start)
+1.  Open `/bridge/host-manifest.json` and paste your Extension ID.
+2.  Run `bridge/register-host.bat` as **Administrator**.
+3.  The mission bridge will now launch automatically with Chrome.
 
-The Bridge can be run in two modes:
-
-#### A. Binary Mode (Recommended for Production)
-1.  Navigate to the `/bridge` directory.
-2.  Double-click **`antigravity-bridge.exe`**.
-3.  The mission terminal will open automatically and begin secure telemetry streaming.
-
-#### B. Development Mode
-1.  Open a terminal in the `/bridge` directory.
-2.  Run `npm install` (first time only).
-3.  Run `npm start` to initialize the stream.
-
-> [!IMPORTANT]
-> **Brain Bridge (Phase 4)** requires **Ollama** installed and running with the `phi3:mini` model (optimized for RAM). The bridge acts as a secure AI proxy on **Port 3002**.
+### 3. Manual Bridge Setup
+1.  Navigate to `/bridge`.
+2.  Create a `.env` file (see `bridge/server.js` for required keys).
+3.  Run `antigravity-bridge.exe` or `npm start`.
 
 ## Technical Specifications
 
 | Objective | Specification |
 |-----------|---------------|
-| Manifest Protocol | Version 3 |
-| Backend Bridge | Standalone EXE (Port 3002) |
-| AI Engine | Ollama (phi3:mini) |
-| Security | Auth Token (Enforced) |
-| Design Language | Mission Control (Neon/Glassmorphism) |
-| Performance Target | < 50ms UI Latency |
+| Architecture | ES6 Modular / EventBus |
+| AI Engine | Dual-Brain (Ollama + Remote) |
+| DevOps | Live Process Streaming (Spawn) |
+| Security | ENV Hardened / Native Messaging |
+| Aesthetics | Mission Control (Glassmorphism) |
 
 ---
 
 <div align="center">
-  <sub>Propiedad de Antigravity AI Operations. Todos los derechos reservados.</sub>
+  <sub>Propiedad de Antigravity AI Operations. God-Tier Status: ENABLED.</sub>
 </div>
