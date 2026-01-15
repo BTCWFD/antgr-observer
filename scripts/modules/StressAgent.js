@@ -3,15 +3,18 @@ import { State } from './State.js';
 
 export class StressAgent {
     constructor() {
-        this.active = false;
         this.telemetryInterval = null;
         this.logInterval = null;
         this.bridgeInterval = null;
     }
 
+    get active() {
+        return State.stressActive;
+    }
+
     start() {
-        if (this.active) return;
-        this.active = true;
+        if (State.stressActive) return;
+        State.stressActive = true;
         Bus.emit('log', { msg: '!!! INITIATING GOD-TIER STRESS TEST !!!', type: 'warning' });
 
         // 1. Telemetry Flood (High frequency UI updates)
@@ -51,11 +54,12 @@ export class StressAgent {
     }
 
     stop() {
-        this.active = false;
+        State.stressActive = false;
         clearInterval(this.telemetryInterval);
         clearInterval(this.logInterval);
         clearInterval(this.bridgeInterval);
         Bus.emit('log', { msg: 'STRESS TEST TERMINATED. SYSTEM STABILIZED.', type: 'success' });
+        Bus.emit('ui_update');
     }
 }
 

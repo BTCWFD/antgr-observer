@@ -5,45 +5,68 @@ export class BridgeClient {
     constructor(url) {
         this.url = url;
         this.socket = null;
-        this.reconnectInterval = 5000;
+        this.reconnectInterval = 2000;
         this.isNativeConnected = false;
     }
 
     connect() {
         const token = State.authKey;
+        if (!token) {
+            Bus.emit('log', { msg: 'Bridge: Waiting for Security Token...', type: 'warning' });
+            return;
+        }
+
         try {
+            if (this.socket) {
+                this.socket.onopen = null;
+                this.socket.onmessage = null;
+                this.socket.onclose = null;
+                this.socket.onerror = null;
+                this.socket.close();
+            }
+
+            Bus.emit('log', { msg: `Bridge: Attempting connection to ${this.url}...`, type: 'system' });
             this.socket = new WebSocket(`${this.url}?token=${token}`);
 
             this.socket.onopen = () => {
                 State.bridgeStatus = 'ONLINE';
-                Bus.emit('log', { msg: 'Connected to Local Agent Bridge.', type: 'system' });
+                Bus.emit('log', { msg: 'Bridge Status: [PROTECTED CONNECTION ESTABLISHED]', type: 'success' });
                 Bus.emit('bridge_status', 'ONLINE');
+                this.scanCodebase();
             };
 
             this.socket.onmessage = (event) => {
-                const data = JSON.parse(event.data);
-                if (data.type === 'TELEMETRY') {
-                    State.telemetry = data.data;
-                    this.handleTelemetry(data.data);
-                } else if (data.type === 'LLM_RESPONSE') {
-                    Bus.emit('ai_response', data);
-                } else if (data.type === 'PROCESS_LOG') {
-                    Bus.emit('process_log', data);
-                } else if (data.type === 'CODEBASE_INDEX') {
-                    State.codebaseIndex = data.files;
-                    Bus.emit('log', { msg: `Semantic: Indexed ${Object.keys(data.files).length} files. AI context primed.`, type: 'system' });
-                } else if (data.type === 'SYSTEM') {
-                    Bus.emit('log', { msg: `Bridge: ${data.msg}`, type: 'system' });
+                try {
+                    const data = JSON.parse(event.data);
+                    if (data.type === 'TELEMETRY') {
+                        State.telemetry = data.data;
+                        this.handleTelemetry(data.data);
+                    } else if (data.type === 'LLM_RESPONSE') {
+                        Bus.emit('ai_response', data);
+                    } else if (data.type === 'PROCESS_LOG') {
+                        Bus.emit('process_log', data);
+                    } else if (data.type === 'CODEBASE_INDEX') {
+                        State.codebaseIndex = data.files;
+                        Bus.emit('log', { msg: `Semantic: Indexed ${Object.keys(data.files).length} files. AI context primed.`, type: 'system' });
+                    } else if (data.type === 'SYSTEM') {
+                        Bus.emit('log', { msg: `Bridge: ${data.msg}`, type: 'system' });
+                    }
+                } catch (e) {
+                    console.error('Bridge Message Error:', e);
                 }
             };
 
-            this.socket.onclose = () => {
+            this.socket.onclose = (event) => {
                 State.bridgeStatus = 'OFFLINE';
                 Bus.emit('bridge_status', 'OFFLINE');
+                if (!event.wasClean) {
+                    Bus.emit('log', { msg: 'Bridge Status: [UNEXPECTED DISCONNECT]', type: 'warning' });
+                }
                 setTimeout(() => this.connect(), this.reconnectInterval);
             };
 
-            this.socket.onerror = () => {
+            this.socket.onerror = (err) => {
+                console.error('Bridge Socket Error:', err);
                 this.socket.close();
             };
         } catch (e) {
@@ -108,4 +131,4 @@ export class BridgeClient {
     }
 }
 
-export const Bridge = new BridgeClient('ws://localhost:3002');
+export const Bridge = new BridgeClient('ws://localhost:3001');

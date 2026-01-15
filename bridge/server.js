@@ -6,7 +6,7 @@ const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
 
-const PORT = process.env.PORT || 3002;
+const PORT = process.env.PORT || 3001;
 const AUTH_TOKEN = process.env.AUTH_TOKEN;
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || "phi3:mini";

@@ -78,22 +78,34 @@ async function init() {
 
     // Stress Test Listener
     const stressBtn = document.getElementById('stress-btn');
+    const syncStressUI = () => {
+        if (!stressBtn) return;
+        if (State.stressActive) {
+            stressBtn.textContent = 'TERMINATE STRESS';
+            stressBtn.classList.add('stressing');
+        } else {
+            stressBtn.textContent = 'STRESS TEST';
+            stressBtn.classList.remove('stressing');
+        }
+    };
+
     if (stressBtn) {
         stressBtn.addEventListener('click', () => {
-            if (Stress.active) {
+            if (State.stressActive) {
                 Stress.stop();
-                stressBtn.textContent = 'STRESS TEST';
-                stressBtn.classList.remove('stressing');
                 Bus.emit('log', { msg: 'Manual Override: Stress Test Terminated.', type: 'success' });
             } else {
                 Stress.start();
-                stressBtn.textContent = 'TERMINATE STRESS';
-                stressBtn.classList.add('stressing');
                 Bus.emit('log', { msg: 'Manual Override: Stress Test Initiated.', type: 'warning' });
             }
+            syncStressUI();
             updateUI();
+            saveState();
         });
     }
+
+    // Initial Stress UI Sync
+    syncStressUI();
 
     // Accordion Logic
     document.querySelectorAll('.node-header').forEach(header => {
@@ -119,7 +131,7 @@ async function init() {
 
             updateUI();
             renderPlugins();
-            Bus.emit('log', { msg: 'System core recovered from storage.', type: 'system' });
+            Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
         } else {
             renderPlugins();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
@@ -290,9 +302,10 @@ function updateUI() {
         uxScore.style.color = State.uxScore < 90 ? '#ff00ff' : '#bc00ff';
     }
 
-    if (ctoStatus && !State.isScanning) {
-        ctoStatus.textContent = `BRIDGE: ${State.bridgeStatus}`;
-        ctoStatus.style.color = State.bridgeStatus === 'ONLINE' ? '#00ff88' : '#ff5555';
+    const bridgeBadge = document.getElementById('bridge-status-indicator');
+    if (bridgeBadge) {
+        bridgeBadge.textContent = `BRIDGE: ${State.bridgeStatus}`;
+        bridgeBadge.className = `bridge-badge ${State.bridgeStatus.toLowerCase()}`;
     }
 
     // Node Reactive Pulsing

@@ -168,6 +168,35 @@ h1 {
   font-weight: 600;
 }
 
+.status-indicators {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.bridge-badge {
+  font-size: 0.65rem;
+  padding: 4px 10px;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+  transition: all 0.3s ease;
+}
+
+.bridge-badge.online {
+  background: rgba(0, 255, 136, 0.1);
+  color: #00ff88;
+  border: 1px solid rgba(0, 255, 136, 0.4);
+  box-shadow: 0 0 10px rgba(0, 255, 136, 0.2);
+}
+
+.bridge-badge.offline {
+  background: rgba(255, 85, 85, 0.1);
+  color: #ff5555;
+  border: 1px solid rgba(255, 85, 85, 0.4);
+}
+
 /* Tab Bar */
 .tab-bar {
   display: flex;

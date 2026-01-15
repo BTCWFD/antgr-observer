@@ -117,7 +117,7 @@ export class CTOAuditor {
 
     stop() {
         this.active = false;
-        this.statusEl.textContent = 'IDLE';
+        this.statusEl.textContent = 'AUDIT READY';
         this.statusEl.classList.remove('pulse');
     }
 
