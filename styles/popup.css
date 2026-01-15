@@ -203,13 +203,12 @@ h1 {
 }
 
 .view {
-  display: none;
+  display: block;
+  /* Always visible in the flex wrapper */
   animation: fadeIn 0.4s ease-out;
 }
 
-.view.active {
-  display: block;
-}
+/* Node states are handled by parent transform and display: block */
 
 /* Collapsible Node System */
 .mission-node {

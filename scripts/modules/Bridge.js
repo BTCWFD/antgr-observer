@@ -17,7 +17,7 @@ export class BridgeClient {
             this.socket.onopen = () => {
                 State.bridgeStatus = 'ONLINE';
                 Bus.emit('log', { msg: 'Connected to Local Agent Bridge.', type: 'system' });
-                // Note: updateUI callback will be handled via Bus in the orchestrator
+                Bus.emit('bridge_status', 'ONLINE');
             };
 
             this.socket.onmessage = (event) => {
@@ -39,6 +39,7 @@ export class BridgeClient {
 
             this.socket.onclose = () => {
                 State.bridgeStatus = 'OFFLINE';
+                Bus.emit('bridge_status', 'OFFLINE');
                 setTimeout(() => this.connect(), this.reconnectInterval);
             };
 

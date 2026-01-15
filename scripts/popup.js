@@ -26,6 +26,7 @@ async function init() {
     // Subscribe to AI and UI events
     Bus.on('ai_response', handleAIResponse);
     Bus.on('ui_update', updateUI);
+    Bus.on('bridge_status', updateUI); // Update UI when connection state changes
     Bus.on('telemetry_update', (data) => {
         Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`);
         // We use telemetry as a heartbeat for the sparklines
@@ -97,6 +98,10 @@ async function init() {
             renderPlugins();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
         }
+
+        // Connect only AFTER recovering state (to use the correct authKey)
+        Bridge.connect();
+        setTimeout(() => Bridge.scanCodebase(), 2000);
     });
 
     // Security Token Listener
@@ -106,13 +111,10 @@ async function init() {
             State.authKey = e.target.value;
             Bus.emit('log', { msg: 'Security: Token updated. Re-handshaking with Bridge...', type: 'warning' });
             Bridge.connect();
-            // The scan will be triggered by the connection event or we can delay it
             setTimeout(() => Bridge.scanCodebase(), 1000);
         });
     }
 
-    Bridge.connect();
-    setTimeout(() => Bridge.scanCodebase(), 2000); // Initial scan
     document.getElementById('refresh-btn').addEventListener('click', runWorkspaceSync);
 
     // Watch for external status updates
