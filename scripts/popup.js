@@ -5,12 +5,40 @@ const State = {
     tokens: 0,
     cost: 0,
     securityScore: 100,
+    activePlugins: ['github-sync', 'cost-optimizer'],
     logs: []
 };
 
+const PLUGINS = [
+    { id: 'github-sync', name: 'GitHub Integrator', desc: 'Auto-sync milestones.', status: 'STABLE' },
+    { id: 'cost-optimizer', name: 'Cost Optimizer Pro', desc: 'Token saving insights.', status: 'ACTIVE' },
+    { id: 'watchdog', name: 'Agent Watchdog', desc: 'Real-time performance.', status: 'BETA' },
+    { id: 'cyber-guard', name: 'Cyber-Guard v2', desc: 'Moral security layer.', status: 'SECURE' }
+];
+
+/**
+ * TerminalManager: Streams raw system data.
+ */
+class TerminalManager {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+    }
+
+    stream(line) {
+        const div = document.createElement('div');
+        div.className = 'terminal-line';
+        div.textContent = `> ${line}`;
+        this.container.appendChild(div);
+        if (this.container.children.length > 8) this.container.firstElementChild.remove();
+    }
+
+    clear() {
+        this.container.innerHTML = '<div class="terminal-line">> SCANNING...</div>';
+    }
+}
+
 /**
  * MissionLogger: High-performance reactive log manager.
- * Implements a circular buffer to prevent DOM bloat and layout thrashing.
  */
 class MissionLogger {
     constructor(containerId, maxEntries = 100) {
@@ -23,54 +51,78 @@ class MissionLogger {
         entry.className = `log-entry ${type}`;
         const time = new Date().toLocaleTimeString([], { hour12: false });
         entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${message}</span>`;
-        
-        this.container.prepend(entry);
-        
-        // Maintain buffer size
-        if (this.container.children.length > this.maxEntries) {
-            this.container.lastElementChild.remove();
-        }
-        
-        // Auto-scroll logic (scroll to top because we prepend)
-        this.container.scrollTop = 0;
-    }
 
-    clear() {
-        this.container.innerHTML = '';
+        this.container.prepend(entry);
+        if (this.container.children.length > this.maxEntries) this.container.lastElementChild.remove();
+        this.container.scrollTop = 0;
     }
 }
 
-let Logger;
+let Logger, Terminal;
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
     Logger = new MissionLogger('log-container');
+    Terminal = new TerminalManager('terminal-container');
+
     const refreshBtn = document.getElementById('refresh-btn');
     const tabBtns = document.querySelectorAll('.tab-btn');
 
-    // Tab Switching Logic
     tabBtns.forEach(btn => {
-        btn.addEventListener('click', () => {
-            const tabName = btn.getAttribute('data-tab');
-            switchTab(tabName);
-        });
+        btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
     });
 
     // Load Persistent State
     chrome.storage.local.get(['observerState'], (result) => {
         if (result.observerState) {
             Object.assign(State, result.observerState);
-            State.isScanning = false; // Reset scan state on reload
+            State.isScanning = false;
             updateUI();
-            addLogEntry('System core recovered from deep sleep.', 'system');
+            renderPlugins();
+            addLogEntry('System core recovered from storage.', 'system');
         } else {
+            renderPlugins();
             addLogEntry('System core initialized. Heartbeat stable.', 'system');
         }
     });
 
     updateSystemMetrics();
     refreshBtn.addEventListener('click', runWorkspaceSync);
+}
+
+function renderPlugins() {
+    const list = document.getElementById('dynamic-plugin-list');
+    list.innerHTML = '';
+
+    PLUGINS.forEach(p => {
+        const active = State.activePlugins.includes(p.id);
+        const card = document.createElement('div');
+        card.className = `plugin-card ${active ? 'active' : 'disabled'}`;
+        card.innerHTML = `
+            <div class="plugin-info">
+                <span class="plugin-name">${p.name} <span class="plugin-status">[${p.status}]</span></span>
+                <span class="plugin-desc">${p.desc}</span>
+            </div>
+            <label class="switch">
+                <input type="checkbox" ${active ? 'checked' : ''} data-id="${p.id}">
+                <span class="slider"></span>
+            </label>
+        `;
+        list.appendChild(card);
+
+        card.querySelector('input').addEventListener('change', (e) => {
+            if (e.target.checked) {
+                State.activePlugins.push(p.id);
+                addLogEntry(`Plugin ${p.name} activated.`, 'system');
+            } else {
+                State.activePlugins = State.activePlugins.filter(id => id !== p.id);
+                addLogEntry(`Plugin ${p.name} offline.`, 'warning');
+            }
+            saveState();
+            renderPlugins();
+        });
+    });
 }
 
 function switchTab(tabName) {
@@ -89,17 +141,15 @@ async function runWorkspaceSync() {
     State.isScanning = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'SCANNING...';
-    insightsPanel.innerHTML = '<div class="insight-placeholder">Analyzing patterns...</div>';
+    Terminal.clear();
 
     const sequence = [
-        { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450 },
-        { msg: 'Checking Ethical Guardrails (Policy v2.1)...', type: 'system', delay: 600, tokens: 200 },
-        { msg: 'Analyzing code for prompt injection risks...', type: 'default', delay: 1200, tokens: 500 },
-        { msg: 'Hashing directory tree for adk-python...', type: 'default', delay: 800, tokens: 1200 },
-        { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15 },
-        { msg: 'Predicting future resource bottlenecks...', type: 'system', delay: 1000, tokens: 400 },
-        { msg: 'Verifying Compliance [Agent Integrity: OK]', type: 'success', delay: 1000, tokens: 150 },
-        { msg: 'Optimizing artifact observation layer...', type: 'system', delay: 500, tokens: 2100 }
+        { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450, term: 'IO_INIT_0xFA32' },
+        { msg: 'Checking Ethical Guardrails...', type: 'system', delay: 600, tokens: 200, term: 'POLICY_MV_21_OK' },
+        { msg: 'Analyzing prompt injection risks...', type: 'default', delay: 1200, tokens: 500, term: 'TOKEN_SCAN_RUN' },
+        { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15, term: 'CRIT_SEC_WARN' },
+        { msg: 'Predicting resource bottlenecks...', type: 'system', delay: 1000, tokens: 400, term: 'RESC_LENT_0.02' },
+        { msg: 'Optimizing artifact observation...', type: 'system', delay: 500, tokens: 2100, term: 'GEMINI_SYNC_100%' }
     ];
 
     State.securityScore = 100;
@@ -109,34 +159,26 @@ async function runWorkspaceSync() {
     for (const step of sequence) {
         await wait(step.delay);
         addLogEntry(step.msg, step.type);
+        Terminal.stream(step.term);
+
         State.progress += (100 / sequence.length);
         State.tokens += step.tokens;
         State.cost = (State.tokens / 1000) * 0.002;
 
         if (step.risk) {
             State.securityScore -= step.risk;
-            addLogEntry(`SECURITY THREAT: Potential credential leak detected!`, 'warning');
         }
 
         updateUI();
         saveState();
-
-        if (State.tokens > 4000) {
-            addLogEntry('WARNING: High token consumption detected.', 'warning');
-        }
     }
 
-    // Generate Predictive Insight
     insightsPanel.innerHTML = `
-    <div class="insight-item">
-      <span class="insight-icon">◈</span>
-      <span>Bottleneck Forecast: High memory usage predicted in 48h.</span>
-    </div>
-    <div class="insight-item" style="margin-top: 8px;">
-      <span class="insight-icon">◈</span>
-      <span>Optimization: Switching to Gemini 1.5 Flash could save 40% cost.</span>
-    </div>
-  `;
+        <div class="insight-item">
+            <span class="insight-icon">◈</span>
+            <span>Watchdog Alert: Agents stable at 98.2% integrity.</span>
+        </div>
+    `;
 
     addLogEntry('Sync completed. All systems nominal.', 'success');
     State.isScanning = false;
@@ -150,44 +192,34 @@ async function runWorkspaceSync() {
 function updateUI() {
     const fill = document.querySelector('.progress-fill');
     const text = document.querySelector('.task-percent');
-    const tokenCount = document.getElementById('token-count');
-    const costValue = document.getElementById('cost-value');
-    const securityScore = document.getElementById('security-score');
+    const tokens = document.getElementById('token-count');
+    const security = document.getElementById('security-score');
 
     if (fill) fill.style.width = `${State.progress}%`;
     if (text) text.textContent = `${Math.round(State.progress)}%`;
-    if (tokenCount) tokenCount.textContent = State.tokens.toLocaleString();
-    if (costValue) costValue.textContent = `$${State.cost.toFixed(3)}`;
-    if (securityScore) {
-        securityScore.textContent = `${State.securityScore}%`;
-        // Dynamic color for security score
-        if (State.securityScore < 90) securityScore.style.color = '#ffaa00';
-        if (State.securityScore < 70) securityScore.style.color = '#ff4444';
-        if (State.securityScore >= 90) securityScore.style.color = '#00ff88';
+    if (tokens) tokens.textContent = State.tokens.toLocaleString();
+    if (security) {
+        security.textContent = `${State.securityScore}%`;
+        security.style.color = State.securityScore < 90 ? '#ffaa00' : '#00ff88';
     }
+    const cost = document.getElementById('cost-value');
+    if (cost) cost.textContent = `$${State.cost.toFixed(3)}`;
 }
 
 function saveState() {
     chrome.storage.local.set({ observerState: State });
 }
 
-function addLogEntry(message, type = 'default') {
-    if (Logger) {
-        Logger.add(message, type);
-    }
+function addLogEntry(msg, type = 'default') {
+    if (Logger) Logger.add(msg, type);
 }
 
 function updateSystemMetrics() {
     setInterval(() => {
-        if (State.isScanning) return;
-        
-        const latency = Math.floor(Math.random() * 20) + 5;
-        const cpu = (Math.random() * 5 + 2).toFixed(1);
-        
-        if (Math.random() > 0.98) {
-            addLogEntry(`Heartbeat: Latency ${latency}ms | CPU ${cpu}%`, 'default');
+        if (!State.isScanning && Math.random() > 0.95) {
+            Terminal.stream(`HD_BUSY_${Math.random().toString(16).slice(2, 6).toUpperCase()}`);
         }
-    }, 5000);
+    }, 3000);
 }
 
-const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+const wait = (ms) => new Promise(res => setTimeout(res, ms));
