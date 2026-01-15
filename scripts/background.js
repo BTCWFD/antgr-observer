@@ -19,6 +19,14 @@ async function monitorProgress() {
         if (result.lastTaskStatus !== currentStatus) {
             notifyUser('Progreso Detectado', `Nueva actualización en Antigravity: ${currentStatus}`);
             chrome.storage.local.set({ lastTaskStatus: currentStatus });
+
+            // Broadcast to popup if open
+            chrome.runtime.sendMessage({
+                type: 'STATUS_UPDATE',
+                payload: { status: currentStatus, timestamp: Date.now() }
+            }).catch(err => {
+                // Popup might be closed, this is fine
+            });
         }
     });
 }

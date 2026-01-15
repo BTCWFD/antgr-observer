@@ -1,4 +1,3 @@
-// Antigravity Observer - God-Tier Reactive Architecture
 const State = {
     isScanning: false,
     progress: 0,
@@ -6,8 +5,57 @@ const State = {
     cost: 0,
     securityScore: 100,
     activePlugins: ['github-sync', 'cost-optimizer'],
-    logs: []
+    logs: [],
+    securityAlerts: []
 };
+
+/**
+ * EventBus: Centralized event management for reactive updates.
+ */
+class EventBus {
+    constructor() {
+        this.listeners = {};
+    }
+
+    on(event, callback) {
+        if (!this.listeners[event]) this.listeners[event] = [];
+        this.listeners[event].push(callback);
+    }
+
+    emit(event, data) {
+        if (this.listeners[event]) {
+            this.listeners[event].forEach(cb => cb(data));
+        }
+    }
+}
+
+const Bus = new EventBus();
+
+/**
+ * SecurityScanner: Real-time pattern matching for credential leaks.
+ */
+class SecurityScanner {
+    constructor() {
+        this.patterns = {
+            api_key: /[a-zA-Z0-9]{32,}/g,
+            private_key: /-----BEGIN (RSA|OPENSSH|EC) PRIVATE KEY-----/g,
+            slack_token: /xox[baprs]-[0-9]{10,12}-[a-zA-Z0-9]{24,}/g,
+            github_token: /gh[pous]_[a-zA-Z0-9]{36,}/g
+        };
+    }
+
+    scan(content) {
+        const matches = [];
+        for (const [type, regex] of Object.entries(this.patterns)) {
+            if (regex.test(content)) {
+                matches.push({ type, line: content });
+            }
+        }
+        return matches;
+    }
+}
+
+const Scanner = new SecurityScanner();
 
 const PLUGINS = [
     { id: 'github-sync', name: 'GitHub Integrator', desc: 'Auto-sync milestones.', status: 'STABLE' },
@@ -44,6 +92,10 @@ class MissionLogger {
     constructor(containerId, maxEntries = 100) {
         this.container = document.getElementById(containerId);
         this.maxEntries = maxEntries;
+
+        // Listen to system events
+        Bus.on('log', (data) => this.add(data.msg, data.type));
+        Bus.on('security_warn', (data) => this.add(`[CRITICAL] Leak Detected: ${data.type}`, 'warning'));
     }
 
     add(message, type = 'default') {
@@ -55,6 +107,17 @@ class MissionLogger {
         this.container.prepend(entry);
         if (this.container.children.length > this.maxEntries) this.container.lastElementChild.remove();
         this.container.scrollTop = 0;
+
+        // Security scanning integration
+        if (type !== 'system') {
+            const leaks = Scanner.scan(message);
+            leaks.forEach(leak => {
+                Bus.emit('security_warn', leak);
+                State.securityScore -= 5;
+                if (State.securityScore < 0) State.securityScore = 0;
+                updateUI();
+            });
+        }
     }
 }
 
@@ -89,6 +152,13 @@ async function init() {
 
     updateSystemMetrics();
     refreshBtn.addEventListener('click', runWorkspaceSync);
+
+    // Runtime Message Observer
+    chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+        if (request.type === 'STATUS_UPDATE') {
+            Bus.emit('log', { msg: `External Sync: ${request.payload.status}`, type: 'system' });
+        }
+    });
 }
 
 function renderPlugins() {
@@ -158,7 +228,7 @@ async function runWorkspaceSync() {
 
     for (const step of sequence) {
         await wait(step.delay);
-        addLogEntry(step.msg, step.type);
+        Bus.emit('log', { msg: step.msg, type: step.type });
         Terminal.stream(step.term);
 
         State.progress += (100 / sequence.length);
