@@ -28,7 +28,7 @@ export class BridgeClient {
                 } else if (data.type === 'LLM_RESPONSE') {
                     Bus.emit('ai_response', data);
                 } else if (data.type === 'PROCESS_LOG') {
-                    Bus.emit('devops_log', data);
+                    Bus.emit('process_log', data);
                 } else if (data.type === 'CODEBASE_INDEX') {
                     State.codebaseIndex = data.files;
                     Bus.emit('log', { msg: `Semantic: Indexed ${Object.keys(data.files).length} files. AI context primed.`, type: 'system' });
@@ -85,9 +85,7 @@ export class BridgeClient {
 
     handleTelemetry(data) {
         if (!State.isScanning) {
-            if (Math.random() > 0.8) {
-                Bus.emit('telemetry_update', data);
-            }
+            Bus.emit('telemetry', data);
         }
     }
 

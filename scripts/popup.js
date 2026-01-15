@@ -3,6 +3,7 @@ import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
 import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
 import { CTOAuditor, UXExpert } from './modules/Agents.js';
+import { Stress } from './modules/StressAgent.js';
 
 // --- Initialization ---
 
@@ -27,14 +28,20 @@ async function init() {
     Bus.on('ai_response', handleAIResponse);
     Bus.on('ui_update', updateUI);
     Bus.on('bridge_status', updateUI); // Update UI when connection state changes
-    Bus.on('telemetry_update', (data) => {
+    Bus.on('telemetry', (data) => {
         Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`);
         // We use telemetry as a heartbeat for the sparklines
-        tokenSpark.add(State.tokenCount);
+        tokenSpark.add(State.tokens);
         costSpark.add(State.cost);
         securitySpark.add(State.securityScore);
     });
-    Bus.on('devops_log', (data) => DevOpsTerminal.stream(data.data));
+    Bus.on('process_log', (data) => {
+        if (typeof data === 'string') {
+            DevOpsTerminal.stream(data);
+        } else {
+            DevOpsTerminal.stream(data.data);
+        }
+    });
 
     // DevOps Action Handler
     Bus.on('devops_action', (data) => {
@@ -66,6 +73,25 @@ async function init() {
         stopBtn.addEventListener('click', () => {
             Bridge.stopTask();
             Bus.emit('log', { msg: `DevOps: Terminating active task.`, type: 'warning' });
+        });
+    }
+
+    // Stress Test Listener
+    const stressBtn = document.getElementById('stress-btn');
+    if (stressBtn) {
+        stressBtn.addEventListener('click', () => {
+            if (Stress.active) {
+                Stress.stop();
+                stressBtn.textContent = 'STRESS TEST';
+                stressBtn.classList.remove('stressing');
+                Bus.emit('log', { msg: 'Manual Override: Stress Test Terminated.', type: 'success' });
+            } else {
+                Stress.start();
+                stressBtn.textContent = 'TERMINATE STRESS';
+                stressBtn.classList.add('stressing');
+                Bus.emit('log', { msg: 'Manual Override: Stress Test Initiated.', type: 'warning' });
+            }
+            updateUI();
         });
     }
 
