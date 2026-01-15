@@ -86,6 +86,11 @@ class UXExpert {
             btn.classList.add('deployed');
         }
     }
+
+    async askAI(context) {
+        const prompt = `Como experto UX en una misión crítica, analiza este log: "${context}". Da una recomendación técnica corta de diseño o UX. Formato: { "label": "...", "type": "plugin|button|style" }`;
+        Bridge.sendAIRequest('UX', prompt);
+    }
 }
 
 /**
@@ -114,6 +119,8 @@ class BridgeClient {
                 if (data.type === 'TELEMETRY') {
                     State.telemetry = data.data;
                     this.handleTelemetry(data.data);
+                } else if (data.type === 'LLM_RESPONSE') {
+                    Bus.emit('ai_response', data);
                 } else if (data.type === 'SYSTEM') {
                     Bus.emit('log', { msg: `Bridge: ${data.msg}`, type: 'system' });
                 }
@@ -133,11 +140,23 @@ class BridgeClient {
         }
     }
 
+    sendAIRequest(agent, prompt) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'LLM_PROMPT',
+                agent: agent,
+                prompt: prompt
+            }));
+            return true;
+        }
+        return false;
+    }
+
     handleTelemetry(data) {
         if (!State.isScanning) {
             // Ambient telemetry in terminal
             if (Math.random() > 0.8) {
-                Terminal.stream(`CPU_LOAD: ${data.cpu}% | MEM: ${data.memory}%`);
+                Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`);
             }
         }
     }
@@ -296,6 +315,11 @@ class CTOAuditor {
         this.container.prepend(alert);
         if (this.container.children.length > 2) this.container.lastElementChild.remove();
     }
+
+    async askAI(context) {
+        const prompt = `Como CTO de Antigravity, analiza este evento: "${context}". Dame una recomendación técnica crítica y corta (máximo 15 palabras).`;
+        Bridge.sendAIRequest('CTO', prompt);
+    }
 }
 
 let Logger, Terminal, Auditor, UX;
@@ -307,6 +331,26 @@ async function init() {
     Terminal = new TerminalManager('terminal-container');
     Auditor = new CTOAuditor('cto-panel', 'cto-status');
     UX = new UXExpert('ux-recommendations', 'ux-score');
+
+    Bus.on('ai_response', (data) => {
+        if (data.error) {
+            Bus.emit('log', { msg: `Brain Bridge Error: ${data.error}`, type: 'warning' });
+            return;
+        }
+
+        if (data.agent === 'CTO') {
+            Auditor.report('BRAIN', data.response);
+        } else if (data.agent === 'UX') {
+            try {
+                // Try to parse JSON recommendation if AI followed format
+                const rec = JSON.parse(data.response);
+                UX.addRecommendation({ id: `ai-${Date.now()}`, ...rec });
+            } catch (e) {
+                // Fallback to simple button if not JSON
+                UX.addRecommendation({ id: `ai-${Date.now()}`, label: data.response, type: 'button' });
+            }
+        }
+    });
 
     const refreshBtn = document.getElementById('refresh-btn');
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -448,11 +492,19 @@ async function runWorkspaceSync() {
         Terminal.stream(step.term);
 
         if (step.cto) {
-            Bus.emit('cto_insight', step.cto);
+            if (State.bridgeStatus === 'ONLINE') {
+                Auditor.askAI(step.cto.msg);
+            } else {
+                Auditor.report(step.cto.type, step.cto.msg);
+            }
         }
 
         if (step.ux) {
-            Bus.emit('ux_recommend', step.ux);
+            if (State.bridgeStatus === 'ONLINE') {
+                UX.askAI(step.msg);
+            } else {
+                UX.addRecommendation(step.ux);
+            }
             State.uxScore -= 2;
         }
 

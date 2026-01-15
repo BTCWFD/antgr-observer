@@ -1,9 +1,13 @@
 const { WebSocketServer } = require('ws');
 const os = require('os');
 const { execSync } = require('child_process');
+const http = require('http');
 
 const PORT = 3000;
 const AUTH_TOKEN = "antgr_secret_v1_99"; // Simple security layer
+const OLLAMA_URL = "http://localhost:11434/api/generate";
+const DEFAULT_MODEL = "llama3"; // or "phi3", "mistral", etc.
+
 const wss = new WebSocketServer({ port: PORT });
 
 console.log(`[ANTGR-BRIDGE] Mission Control Bridge started on ws://localhost:${PORT}`);
@@ -26,6 +30,44 @@ function getDiskUsage() {
     return 0;
 }
 
+async function callOllama(prompt) {
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify({
+            model: DEFAULT_MODEL,
+            prompt: prompt,
+            stream: false
+        });
+
+        const options = {
+            hostname: 'localhost',
+            port: 11434,
+            path: '/api/generate',
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': data.length
+            }
+        };
+
+        const req = http.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    resolve(parsed.response);
+                } catch (e) {
+                    reject('Ollama Parse Error');
+                }
+            });
+        });
+
+        req.on('error', (e) => reject(`Ollama Connection Error: ${e.message}`));
+        req.write(data);
+        req.end();
+    });
+}
+
 wss.on('connection', (ws, req) => {
     // Basic Auth Check via URL params
     const url = new URL(req.url, `http://${req.headers.host}`);
@@ -39,7 +81,7 @@ wss.on('connection', (ws, req) => {
     }
 
     console.log('[ANTGR-BRIDGE] Extension authenticated.');
-    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Connection Secure. Telemetry Streaming.' }));
+    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' }));
 
     const interval = setInterval(() => {
         const cpuUsage = os.loadavg()[0]; // 1 min average
@@ -63,6 +105,31 @@ wss.on('connection', (ws, req) => {
             ws.send(JSON.stringify(payload));
         }
     }, 2000);
+
+    ws.on('message', async (message) => {
+        try {
+            const request = JSON.parse(message);
+            if (request.type === 'LLM_PROMPT') {
+                console.log(`[ANTGR-BRIDGE] AI Request: ${request.agent}`);
+                try {
+                    const response = await callOllama(request.prompt);
+                    ws.send(JSON.stringify({
+                        type: 'LLM_RESPONSE',
+                        agent: request.agent,
+                        response: response
+                    }));
+                } catch (err) {
+                    ws.send(JSON.stringify({
+                        type: 'LLM_RESPONSE',
+                        agent: request.agent,
+                        error: err
+                    }));
+                }
+            }
+        } catch (e) {
+            console.error('[ANTGR-BRIDGE] Malformed message received');
+        }
+    });
 
     ws.on('close', () => {
         console.log('[ANTGR-BRIDGE] Extension disconnected.');

@@ -53,8 +53,8 @@ The Bridge can be run in two modes:
 2.  Run `npm install` (first time only).
 3.  Run `npm start` to initialize the stream.
 
-> [!NOTE]
-> The Bridge uses a secure **Auth Token** protocol to prevent unauthorized local network connections. The extension and bridge are pre-configured to handshake securely.
+> [!IMPORTANT]
+> **Brain Bridge (Phase 4)** requires **Ollama** (ollama.com) installed and running locally with the `llama3` model. The bridge acts as a secure AI proxy.
 
 ## Technical Specifications
 
