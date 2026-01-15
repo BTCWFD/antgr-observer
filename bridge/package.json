@@ -1,0 +1,12 @@
+{
+    "name": "antgr-bridge",
+    "version": "1.0.0",
+    "description": "Local Agent Bridge for Antigravity Observer",
+    "main": "server.js",
+    "dependencies": {
+        "ws": "^8.13.0"
+    },
+    "scripts": {
+        "start": "node server.js"
+    }
+}

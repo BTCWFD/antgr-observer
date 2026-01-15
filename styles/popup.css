@@ -472,6 +472,100 @@ h2 {
   }
 }
 
+/* UX Mission Lab Styles */
+.ux-lab {
+  margin-bottom: 24px;
+}
+
+.ux-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.ux-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 2px;
+  color: var(--neon-violet);
+  text-shadow: 0 0 10px rgba(188, 0, 255, 0.4);
+}
+
+.ux-score-badge {
+  font-size: 0.55rem;
+  color: var(--neon-violet);
+  border: 1px solid var(--neon-violet);
+  padding: 1px 6px;
+  border-radius: 4px;
+}
+
+.ux-recommendations {
+  background: rgba(188, 0, 255, 0.05);
+  border: 1px solid rgba(188, 0, 255, 0.2);
+  padding: 12px;
+  border-radius: 8px;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.7rem;
+  max-height: 150px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ux-rec-card {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px;
+  border-radius: 6px;
+  border: 1px solid var(--border-glass);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  animation: slide-in 0.3s ease-out;
+}
+
+.ux-rec-content {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.65rem;
+}
+
+.ux-rec-icon {
+  font-size: 0.9rem;
+}
+
+.ux-action-btn {
+  background: transparent;
+  border: 1px solid var(--neon-violet);
+  color: var(--neon-violet);
+  padding: 4px 8px;
+  font-size: 0.55rem;
+  border-radius: 4px;
+  cursor: pointer;
+  width: auto;
+  transition: all 0.2s ease;
+}
+
+.ux-action-btn:hover {
+  background: var(--neon-violet);
+  color: #fff;
+  box-shadow: 0 0 10px var(--neon-violet);
+}
+
+.ux-action-btn.deployed {
+  border-color: #00ff88;
+  color: #00ff88;
+  cursor: default;
+}
+
+.ux-placeholder {
+  color: rgba(188, 0, 255, 0.4);
+  font-style: italic;
+  text-align: center;
+}
+
 footer {
   margin-top: 20px;
 }
