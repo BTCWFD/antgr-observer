@@ -247,6 +247,50 @@ h2 {
   font-weight: bold;
 }
 
+.mission-insights {
+  margin-bottom: 24px;
+}
+
+.insights-container {
+  background: rgba(188, 0, 255, 0.05);
+  border: 1px dashed var(--neon-violet);
+  padding: 12px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  min-height: 40px;
+}
+
+.insight-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-main);
+  animation: slide-in 0.5s ease-out;
+}
+
+.insight-icon {
+  color: var(--neon-violet);
+  font-weight: bold;
+}
+
+.insight-placeholder {
+  color: var(--text-dim);
+  font-style: italic;
+  text-align: center;
+}
+
+@keyframes slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 footer {
   margin-top: 20px;
 }

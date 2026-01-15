@@ -23,9 +23,11 @@ async function runWorkspaceSync() {
     if (State.isScanning) return;
 
     const refreshBtn = document.getElementById('refresh-btn');
+    const insightsPanel = document.getElementById('insights-panel');
     State.isScanning = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'SCANNING...';
+    insightsPanel.innerHTML = '<div class="insight-placeholder">Analyzing patterns...</div>';
 
     const sequence = [
         { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450 },
@@ -33,11 +35,13 @@ async function runWorkspaceSync() {
         { msg: 'Analyzing code for prompt injection risks...', type: 'default', delay: 1200, tokens: 500 },
         { msg: 'Hashing directory tree for adk-python...', type: 'default', delay: 800, tokens: 1200 },
         { msg: 'Scanning for exposed credentials...', type: 'warning', delay: 1500, tokens: 300, risk: 15 },
+        { msg: 'Predicting future resource bottlenecks...', type: 'system', delay: 1000, tokens: 400 },
         { msg: 'Verifying Compliance [Agent Integrity: OK]', type: 'success', delay: 1000, tokens: 150 },
         { msg: 'Optimizing artifact observation layer...', type: 'system', delay: 500, tokens: 2100 }
     ];
 
     State.securityScore = 100;
+    State.tokens = 0;
 
     for (const step of sequence) {
         await wait(step.delay);
@@ -57,6 +61,18 @@ async function runWorkspaceSync() {
             addLogEntry('WARNING: High token consumption detected.', 'warning');
         }
     }
+
+    // Generate Predictive Insight
+    insightsPanel.innerHTML = `
+    <div class="insight-item">
+      <span class="insight-icon">◈</span>
+      <span>Bottleneck Forecast: High memory usage predicted in 48h.</span>
+    </div>
+    <div class="insight-item" style="margin-top: 8px;">
+      <span class="insight-icon">◈</span>
+      <span>Optimization: Switching to Gemini 1.5 Flash could save 40% cost.</span>
+    </div>
+  `;
 
     addLogEntry('Sync completed. All systems nominal.', 'success');
     State.isScanning = false;
