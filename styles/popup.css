@@ -31,6 +31,107 @@ body {
   backdrop-filter: blur(10px);
 }
 
+.tab-bar {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--border-glass);
+  padding-bottom: 10px;
+}
+
+.tab-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  cursor: pointer;
+  padding: 5px 10px;
+  transition: all 0.3s ease;
+  letter-spacing: 1px;
+}
+
+.tab-btn.active {
+  color: var(--neon-cyan);
+  border-bottom: 2px solid var(--neon-cyan);
+  text-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.view {
+  display: none;
+}
+
+.view.active {
+  display: block;
+}
+
+/* Plugin System Styles */
+.plugin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 24px;
+}
+
+.plugin-card {
+  background: var(--glass-bg);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  transition: all 0.3s ease;
+}
+
+.plugin-card.active {
+  border-left: 3px solid var(--neon-cyan);
+}
+
+.plugin-card.disabled {
+  opacity: 0.5;
+  filter: grayscale(1);
+}
+
+.plugin-name {
+  display: block;
+  font-weight: bold;
+  font-size: 0.8rem;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+
+.plugin-desc {
+  display: block;
+  font-size: 0.6rem;
+  color: var(--text-dim);
+}
+
+.plugin-status {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.55rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.plugin-card.active .plugin-status {
+  background: rgba(0, 242, 255, 0.1);
+  color: var(--neon-cyan);
+}
+
+.install-btn {
+  background: var(--neon-violet);
+  color: #fff;
+  border: none;
+  padding: 10px;
+  width: 100%;
+  border-radius: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.7rem;
+  cursor: pointer;
+  box-shadow: 0 0 15px rgba(188, 0, 255, 0.3);
+}
+
 header {
   margin-bottom: 24px;
   text-align: center;

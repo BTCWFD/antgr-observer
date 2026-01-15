@@ -18,7 +18,12 @@
       </div>
     </header>
 
-    <main>
+    <nav class="tab-bar">
+      <button class="tab-btn active" data-tab="main">Main Control</button>
+      <button class="tab-btn" data-tab="plugins">Plugins</button>
+    </nav>
+
+    <div id="main-view" class="view active">
       <section class="active-tasks">
         <h2>ACTIVE MISSIONS</h2>
         <div id="task-list">
@@ -61,18 +66,48 @@
 
       <section class="mission-log">
         <h2>MISSION CONTROL LOG</h2>
-        <div id="log-container">
-          <div class="log-entry">[08:00:30] System: Initializing local monitoring...</div>
-          <div class="log-entry success">[08:00:31] Done: Directories created.</div>
-        </div>
+        <div id="log-container"></div>
       </section>
-    </main>
 
-    <footer>
-      <button id="refresh-btn">SYNC WORKSPACE</button>
-    </footer>
-  </div>
+      <footer>
+        <button id="refresh-btn">SYNC WORKSPACE</button>
+      </footer>
+    </div> <!-- End Main View -->
+
+    <div id="plugins-view" class="view">
+      <section class="plugin-system">
+        <h2>Plugin Registry</h2>
+        <div class="plugin-list">
+          <div class="plugin-card active">
+            <div class="plugin-info">
+              <span class="plugin-name">GitHub Integrator</span>
+              <span class="plugin-desc">Auto-sync issues and milestones.</span>
+            </div>
+            <div class="plugin-status">ONLINE</div>
+          </div>
+          <div class="plugin-card active">
+            <div class="plugin-info">
+              <span class="plugin-name">Slack Notifier</span>
+              <span class="plugin-desc">Push daily reports to #agent-ops.</span>
+            </div>
+            <div class="plugin-status">ONLINE</div>
+          </div>
+          <div class="plugin-card disabled">
+            <div class="plugin-info">
+              <span class="plugin-name">Jira Connector</span>
+              <span class="plugin-desc">Enterprise ticket sync (Legacy).</span>
+            </div>
+            <div class="plugin-status">OFFLINE</div>
+          </div>
+        </div>
+        <button class="install-btn">INSTALL NEW PLUGIN</button>
+      </section>
+    </div> <!-- End Plugins View -->
+  </div> <!-- End Mission Control -->
+
   <script src="scripts/popup.js"></script>
 </body>
+
+</html>
 
 </html>

@@ -12,11 +12,28 @@ document.addEventListener('DOMContentLoaded', init);
 
 function init() {
     const refreshBtn = document.getElementById('refresh-btn');
+    const tabBtns = document.querySelectorAll('.tab-btn');
+
+    // Tab Switching Logic
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            const tabName = btn.getAttribute('data-tab');
+            switchTab(tabName);
+        });
+    });
 
     addLogEntry('System core initialized. Heartbeat stable.', 'system');
     updateSystemMetrics();
 
     refreshBtn.addEventListener('click', runWorkspaceSync);
+}
+
+function switchTab(tabName) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+
+    document.querySelector(`.tab-btn[data-tab="${tabName}"]`).classList.add('active');
+    document.getElementById(`${tabName}-view`).classList.add('active');
 }
 
 async function runWorkspaceSync() {
