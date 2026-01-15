@@ -1,12 +1,13 @@
 import { State } from './modules/State.js';
 import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
-import { MissionLogger, TerminalManager } from './modules/Logger.js';
+import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
 import { CTOAuditor, UXExpert } from './modules/Agents.js';
 
 // --- Initialization ---
 
 let Logger, Terminal, Auditor, UX, DevOpsTerminal;
+let tokenSpark, costSpark, securitySpark;
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -17,20 +18,32 @@ async function init() {
     Auditor = new CTOAuditor('cto-panel', 'cto-status');
     UX = new UXExpert('ux-recommendations', 'ux-score');
 
+    // Initialize Sparklines
+    tokenSpark = new Sparkline('tokens-sparkline', '#00f2ff');
+    costSpark = new Sparkline('cost-sparkline', '#bc00ff');
+    securitySpark = new Sparkline('security-sparkline', '#ffcc00');
+
     // Subscribe to AI and UI events
     Bus.on('ai_response', handleAIResponse);
     Bus.on('ui_update', updateUI);
-    Bus.on('telemetry_update', (data) => Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`));
+    Bus.on('telemetry_update', (data) => {
+        Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`);
+        // We use telemetry as a heartbeat for the sparklines
+        tokenSpark.add(State.tokenCount);
+        costSpark.add(State.cost);
+        securitySpark.add(State.securityScore);
+    });
     Bus.on('devops_log', (data) => DevOpsTerminal.stream(data.data));
 
     // DevOps Action Handler
     Bus.on('devops_action', (data) => {
         if (data.type === 'GITHUB_ISSUE') {
-            const repo = "BTCWFD/antgr-observer"; // This should ideally be dynamic in future
+            const repo = "BTCWFD/antgr-observer";
             const title = encodeURIComponent(data.title);
             const body = encodeURIComponent(data.body);
             const url = `https://github.com/${repo}/issues/new?title=${title}&body=${body}`;
 
+            // UX Polish: Flash button
             Bus.emit('log', { msg: `DevOps: Opening GitHub Issue generator...`, type: 'system' });
             chrome.tabs.create({ url: url });
         }
@@ -253,6 +266,25 @@ function updateUI() {
         ctoStatus.textContent = `BRIDGE: ${State.bridgeStatus}`;
         ctoStatus.style.color = State.bridgeStatus === 'ONLINE' ? '#00ff88' : '#ff5555';
     }
+
+    // Node Reactive Pulsing
+    const ctoNode = document.querySelector('.mission-node .node-header.cto')?.parentElement;
+    const uxNode = document.querySelector('.mission-node .node-header.ux')?.parentElement;
+    const devopsNode = document.querySelector('.mission-node .node-header.devops')?.parentElement;
+
+    if (State.isScanning) {
+        ctoNode?.classList.add('active-pulse', 'cto');
+        uxNode?.classList.add('active-pulse', 'ux');
+    } else {
+        ctoNode?.classList.remove('active-pulse');
+        uxNode?.classList.remove('active-pulse');
+    }
+
+    if (State.isTaskRunning) {
+        devopsNode?.classList.add('active-pulse', 'devops');
+    } else {
+        devopsNode?.classList.remove('active-pulse');
+    }
 }
 
 function renderPlugins() {
@@ -318,17 +350,17 @@ function renderPlugins() {
 }
 
 function switchTab(tabName) {
+    const mainContainer = document.getElementById('mission-control');
     document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
 
     const tabBtn = document.querySelector(`.tab-btn[data-tab="${tabName}"]`);
-    const view = document.getElementById(`${tabName}-view`);
-
     if (tabBtn) tabBtn.classList.add('active');
-    if (view) view.classList.add('active');
 
     if (tabName === 'plugins') {
-        renderPlugins();
+        mainContainer.classList.add('show-plugins');
+        setTimeout(() => renderPlugins(), 300); // Allow slide transition to settle
+    } else {
+        mainContainer.classList.remove('show-plugins');
     }
 }
 
