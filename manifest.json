@@ -1,0 +1,22 @@
+{
+  "manifest_version": 3,
+  "name": "Antigravity Observer",
+  "version": "1.0",
+  "description": "Monitorea y analiza el progreso de tus creaciones en local.",
+  "permissions": [
+    "notifications",
+    "storage",
+    "alarms"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/emblem_16.png",
+      "48": "icons/emblem_48.png",
+      "128": "icons/emblem_128.png"
+    }
+  },
+  "background": {
+    "service_worker": "scripts/background.js"
+  }
+}

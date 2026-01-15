@@ -1,0 +1,206 @@
+:root {
+  --bg-dark: #0a0b10;
+  --glass-bg: rgba(20, 22, 35, 0.7);
+  --neon-cyan: #00f2ff;
+  --neon-violet: #bc00ff;
+  --text-main: #e0e0e0;
+  --text-dim: #a0a0a0;
+  --border-glass: rgba(255, 255, 255, 0.1);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  width: 350px;
+  background-color: var(--bg-dark);
+  font-family: 'Inter', sans-serif;
+  color: var(--text-main);
+  overflow: hidden;
+}
+
+.mission-control {
+  background: radial-gradient(circle at top right, rgba(188, 0, 255, 0.1), transparent),
+    radial-gradient(circle at bottom left, rgba(0, 242, 255, 0.1), transparent);
+  padding: 16px;
+  min-height: 480px;
+  border: 1px solid var(--border-glass);
+  backdrop-filter: blur(10px);
+}
+
+header {
+  margin-bottom: 24px;
+  text-align: center;
+}
+
+h1 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 1.2rem;
+  letter-spacing: 4px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.5);
+  margin-bottom: 4px;
+}
+
+.status-badge {
+  font-size: 0.6rem;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: rgba(0, 242, 255, 0.1);
+  color: var(--neon-cyan);
+  border: 1px solid var(--neon-cyan);
+}
+
+.pulse {
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    opacity: 0.6;
+  }
+
+  50% {
+    opacity: 1;
+    text-shadow: 0 0 15px var(--neon-cyan);
+  }
+
+  100% {
+    opacity: 0.6;
+  }
+}
+
+h2 {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+.active-tasks {
+  margin-bottom: 24px;
+}
+
+.task-item {
+  background: var(--glass-bg);
+  padding: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-glass);
+  margin-bottom: 10px;
+}
+
+.task-header {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8rem;
+  margin-bottom: 8px;
+}
+
+.task-percent {
+  color: var(--neon-violet);
+  font-weight: bold;
+}
+
+.progress-bar {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 3px;
+  overflow: hidden;
+  position: relative;
+  border: 1px solid rgba(0, 242, 255, 0.2);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--neon-cyan), var(--neon-violet));
+  box-shadow: 0 0 15px var(--neon-cyan);
+  position: relative;
+  transition: width 1s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* El "Láser" de escaneo */
+.progress-fill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 20px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, #fff, var(--neon-cyan));
+  box-shadow: 0 0 20px #fff;
+  animation: laser-scan 2s infinite linear;
+}
+
+@keyframes laser-scan {
+  0% {
+    transform: translateX(-100px);
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+
+  100% {
+    transform: translateX(350px);
+    opacity: 0;
+  }
+}
+
+.log-entry {
+  margin-bottom: 6px;
+  color: var(--text-dim);
+  border-left: 2px solid transparent;
+  padding-left: 8px;
+  transition: all 0.3s ease;
+}
+
+.log-entry:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-left-color: var(--neon-cyan);
+  color: var(--text-main);
+}
+
+.log-entry.success {
+  color: #00ff88;
+  text-shadow: 0 0 5px rgba(0, 255, 136, 0.3);
+}
+
+.log-entry.warning {
+  color: #ffaa00;
+}
+
+.log-entry.system {
+  color: var(--neon-cyan);
+  font-weight: bold;
+}
+
+footer {
+  margin-top: 20px;
+}
+
+button {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--neon-cyan);
+  color: var(--neon-cyan);
+  font-family: 'Orbitron', sans-serif;
+  font-weight: bold;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 1px;
+}
+
+button:hover {
+  background: var(--neon-cyan);
+  color: var(--bg-dark);
+  box-shadow: 0 0 20px var(--neon-cyan);
+}

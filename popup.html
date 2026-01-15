@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Antigravity Mission Control</title>
+  <link rel="stylesheet" href="styles/popup.css">
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="mission-control">
+    <header>
+      <div class="logo-container">
+        <h1>ANTIGRAVITY</h1>
+        <span class="status-badge pulse">LIVE OBSERVER</span>
+      </div>
+    </header>
+
+    <main>
+      <section class="active-tasks">
+        <h2>ACTIVE MISSIONS</h2>
+        <div id="task-list">
+          <div class="task-item">
+            <div class="task-header">
+              <span class="task-name">Observer Engine Init</span>
+              <span class="task-percent">90%</span>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" style="width: 90%;"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="mission-log">
+        <h2>MISSION CONTROL LOG</h2>
+        <div id="log-container">
+          <div class="log-entry">[08:00:30] System: Initializing local monitoring...</div>
+          <div class="log-entry success">[08:00:31] Done: Directories created.</div>
+        </div>
+      </section>
+    </main>
+
+    <footer>
+      <button id="refresh-btn">SYNC WORKSPACE</button>
+    </footer>
+  </div>
+  <script src="scripts/popup.js"></script>
+</body>
+</html>
