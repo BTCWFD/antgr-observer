@@ -39,17 +39,30 @@ The system follows a decoupled, reactive architecture:
 2.  Enable **Developer Mode**.
 3.  Select **Load unpacked** and point to the project root.
 
-### 2. Local Agent Bridge (Required for Telemetry)
+### 2. Local Agent Bridge (Telemetry Engine)
+
+The Bridge can be run in two modes:
+
+#### A. Binary Mode (Recommended for Production)
+1.  Navigate to the `/bridge` directory.
+2.  Double-click **`antigravity-bridge.exe`**.
+3.  The mission terminal will open automatically and begin secure telemetry streaming.
+
+#### B. Development Mode
 1.  Open a terminal in the `/bridge` directory.
-2.  Run `npm install` to setup dependencies.
-3.  Run `npm start` to initialize the real-time telemetry stream.
+2.  Run `npm install` (first time only).
+3.  Run `npm start` to initialize the stream.
+
+> [!NOTE]
+> The Bridge uses a secure **Auth Token** protocol to prevent unauthorized local network connections. The extension and bridge are pre-configured to handshake securely.
 
 ## Technical Specifications
 
 | Objective | Specification |
 |-----------|---------------|
 | Manifest Protocol | Version 3 |
-| Backend Bridge | Node.js / WebSockets |
+| Backend Bridge | Node.js / Standalone EXE |
+| Security | Auth Token (Enforced) |
 | Design Language | Mission Control (Neon/Glassmorphism) |
 | Performance Target | < 50ms UI Latency |
 
