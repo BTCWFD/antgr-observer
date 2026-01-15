@@ -1,4 +1,4 @@
-// Antigravity Observer - Optimized Architecture
+// Antigravity Observer - God-Tier Reactive Architecture
 const State = {
     isScanning: false,
     progress: 0,
@@ -8,9 +8,44 @@ const State = {
     logs: []
 };
 
+/**
+ * MissionLogger: High-performance reactive log manager.
+ * Implements a circular buffer to prevent DOM bloat and layout thrashing.
+ */
+class MissionLogger {
+    constructor(containerId, maxEntries = 100) {
+        this.container = document.getElementById(containerId);
+        this.maxEntries = maxEntries;
+    }
+
+    add(message, type = 'default') {
+        const entry = document.createElement('div');
+        entry.className = `log-entry ${type}`;
+        const time = new Date().toLocaleTimeString([], { hour12: false });
+        entry.innerHTML = `<span class="log-time">[${time}]</span> <span class="log-msg">${message}</span>`;
+        
+        this.container.prepend(entry);
+        
+        // Maintain buffer size
+        if (this.container.children.length > this.maxEntries) {
+            this.container.lastElementChild.remove();
+        }
+        
+        // Auto-scroll logic (scroll to top because we prepend)
+        this.container.scrollTop = 0;
+    }
+
+    clear() {
+        this.container.innerHTML = '';
+    }
+}
+
+let Logger;
+
 document.addEventListener('DOMContentLoaded', init);
 
-function init() {
+async function init() {
+    Logger = new MissionLogger('log-container');
     const refreshBtn = document.getElementById('refresh-btn');
     const tabBtns = document.querySelectorAll('.tab-btn');
 
@@ -22,9 +57,19 @@ function init() {
         });
     });
 
-    addLogEntry('System core initialized. Heartbeat stable.', 'system');
-    updateSystemMetrics();
+    // Load Persistent State
+    chrome.storage.local.get(['observerState'], (result) => {
+        if (result.observerState) {
+            Object.assign(State, result.observerState);
+            State.isScanning = false; // Reset scan state on reload
+            updateUI();
+            addLogEntry('System core recovered from deep sleep.', 'system');
+        } else {
+            addLogEntry('System core initialized. Heartbeat stable.', 'system');
+        }
+    });
 
+    updateSystemMetrics();
     refreshBtn.addEventListener('click', runWorkspaceSync);
 }
 
@@ -59,6 +104,7 @@ async function runWorkspaceSync() {
 
     State.securityScore = 100;
     State.tokens = 0;
+    State.progress = 0;
 
     for (const step of sequence) {
         await wait(step.delay);
@@ -73,6 +119,7 @@ async function runWorkspaceSync() {
         }
 
         updateUI();
+        saveState();
 
         if (State.tokens > 4000) {
             addLogEntry('WARNING: High token consumption detected.', 'warning');
@@ -97,6 +144,7 @@ async function runWorkspaceSync() {
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'SYNC WORKSPACE';
     updateUI();
+    saveState();
 }
 
 function updateUI() {
@@ -106,35 +154,37 @@ function updateUI() {
     const costValue = document.getElementById('cost-value');
     const securityScore = document.getElementById('security-score');
 
-    fill.style.width = `${State.progress}%`;
-    text.textContent = `${Math.round(State.progress)}%`;
-    tokenCount.textContent = State.tokens.toLocaleString();
-    costValue.textContent = `$${State.cost.toFixed(3)}`;
-    securityScore.textContent = `${State.securityScore}%`;
+    if (fill) fill.style.width = `${State.progress}%`;
+    if (text) text.textContent = `${Math.round(State.progress)}%`;
+    if (tokenCount) tokenCount.textContent = State.tokens.toLocaleString();
+    if (costValue) costValue.textContent = `$${State.cost.toFixed(3)}`;
+    if (securityScore) {
+        securityScore.textContent = `${State.securityScore}%`;
+        // Dynamic color for security score
+        if (State.securityScore < 90) securityScore.style.color = '#ffaa00';
+        if (State.securityScore < 70) securityScore.style.color = '#ff4444';
+        if (State.securityScore >= 90) securityScore.style.color = '#00ff88';
+    }
+}
 
-    // Color dinámico para el score de seguridad
-    if (State.securityScore < 90) securityScore.style.color = '#ffaa00';
-    if (State.securityScore < 70) securityScore.style.color = '#ff4444';
+function saveState() {
+    chrome.storage.local.set({ observerState: State });
 }
 
 function addLogEntry(message, type = 'default') {
-    const logContainer = document.getElementById('log-container');
-    const entry = document.createElement('div');
-    entry.className = `log-entry ${type}`;
-    const time = new Date().toLocaleTimeString([], { hour12: false });
-    entry.textContent = `[${time}] ${message}`;
-    logContainer.prepend(entry);
-    logContainer.scrollTop = 0;
+    if (Logger) {
+        Logger.add(message, type);
+    }
 }
 
 function updateSystemMetrics() {
-    // Simulación de métricas en tiempo real
     setInterval(() => {
+        if (State.isScanning) return;
+        
         const latency = Math.floor(Math.random() * 20) + 5;
         const cpu = (Math.random() * 5 + 2).toFixed(1);
-        // Podríamos añadir estos elementos al DOM si existieran, 
-        // por ahora solo actualizamos el log con un evento aleatorio raramenre
-        if (Math.random() > 0.95) {
+        
+        if (Math.random() > 0.98) {
             addLogEntry(`Heartbeat: Latency ${latency}ms | CPU ${cpu}%`, 'default');
         }
     }, 5000);
