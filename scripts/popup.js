@@ -162,7 +162,7 @@ class BridgeClient {
     }
 }
 
-const Bridge = new BridgeClient('ws://localhost:3000');
+const Bridge = new BridgeClient('ws://localhost:3001');
 
 /**
  * EventBus: Centralized event management for reactive updates.
