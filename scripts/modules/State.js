@@ -10,5 +10,7 @@ export const State = {
     securityAlerts: [],
     bridgeStatus: 'OFFLINE',
     telemetry: { cpu: 0, memory: 0 },
-    recommendations: []
+    recommendations: [],
+    isTaskRunning: false,
+    devopsLogs: []
 };

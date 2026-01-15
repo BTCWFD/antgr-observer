@@ -494,3 +494,60 @@ input:checked+.slider:before {
   background-color: var(--neon-cyan);
   box-shadow: 0 0 8px var(--neon-cyan);
 }
+
+/* DevOps Mission Actions */
+.cto-alert {
+  background: rgba(255, 255, 255, 0.03);
+  border-left: 2px solid var(--accent-gold);
+  padding: 10px;
+  margin-bottom: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.cto-alert.source-remote {
+  border-left-color: #ffd700;
+}
+
+.cto-alert-main {
+  flex: 1;
+}
+
+.action-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
+  color: var(--text-dim);
+  padding: 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.action-btn:hover {
+  background: rgba(0, 242, 255, 0.1);
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+}
+
+.github-small {
+  font-size: 0.8rem;
+}
+
+.ux-rec-card {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.ux-actions {
+  display: flex;
+  gap: 8px;
+}

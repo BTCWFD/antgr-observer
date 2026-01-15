@@ -6,13 +6,14 @@ import { CTOAuditor, UXExpert } from './modules/Agents.js';
 
 // --- Initialization ---
 
-let Logger, Terminal, Auditor, UX;
+let Logger, Terminal, Auditor, UX, DevOpsTerminal;
 
 document.addEventListener('DOMContentLoaded', init);
 
 async function init() {
     Logger = new MissionLogger('log-container');
     Terminal = new TerminalManager('terminal-container');
+    DevOpsTerminal = new TerminalManager('devops-terminal');
     Auditor = new CTOAuditor('cto-panel', 'cto-status');
     UX = new UXExpert('ux-recommendations', 'ux-score');
 
@@ -20,6 +21,39 @@ async function init() {
     Bus.on('ai_response', handleAIResponse);
     Bus.on('ui_update', updateUI);
     Bus.on('telemetry_update', (data) => Terminal.stream(`CPU: ${data.cpu}% | MEM: ${data.memory}% | DSK: ${data.disk}%`));
+    Bus.on('devops_log', (data) => DevOpsTerminal.stream(data.data));
+
+    // DevOps Action Handler
+    Bus.on('devops_action', (data) => {
+        if (data.type === 'GITHUB_ISSUE') {
+            const repo = "BTCWFD/antgr-observer"; // This should ideally be dynamic in future
+            const title = encodeURIComponent(data.title);
+            const body = encodeURIComponent(data.body);
+            const url = `https://github.com/${repo}/issues/new?title=${title}&body=${body}`;
+
+            Bus.emit('log', { msg: `DevOps: Opening GitHub Issue generator...`, type: 'system' });
+            chrome.tabs.create({ url: url });
+        }
+    });
+
+    // DevOps UI Listeners
+    const startBtn = document.getElementById('start-task-btn');
+    const stopBtn = document.getElementById('stop-task-btn');
+
+    if (startBtn) {
+        startBtn.addEventListener('click', () => {
+            const cmd = "ping localhost"; // Example task
+            Bridge.startTask(cmd);
+            Bus.emit('log', { msg: `DevOps: Initiating task [${cmd}]`, type: 'system' });
+        });
+    }
+
+    if (stopBtn) {
+        stopBtn.addEventListener('click', () => {
+            Bridge.stopTask();
+            Bus.emit('log', { msg: `DevOps: Terminating active task.`, type: 'warning' });
+        });
+    }
 
     // Accordion Logic
     document.querySelectorAll('.node-header').forEach(header => {

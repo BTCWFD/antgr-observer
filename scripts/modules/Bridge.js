@@ -27,6 +27,8 @@ export class BridgeClient {
                     this.handleTelemetry(data.data);
                 } else if (data.type === 'LLM_RESPONSE') {
                     Bus.emit('ai_response', data);
+                } else if (data.type === 'PROCESS_LOG') {
+                    Bus.emit('devops_log', data);
                 } else if (data.type === 'SYSTEM') {
                     Bus.emit('log', { msg: `Bridge: ${data.msg}`, type: 'system' });
                 }
@@ -82,6 +84,18 @@ export class BridgeClient {
             if (Math.random() > 0.8) {
                 Bus.emit('telemetry_update', data);
             }
+        }
+    }
+
+    startTask(command) {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ type: 'START_TASK', command: command }));
+        }
+    }
+
+    stopTask() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({ type: 'STOP_TASK' }));
         }
     }
 }

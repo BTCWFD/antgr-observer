@@ -81,7 +81,12 @@ async function callOllama(prompt) {
     });
 }
 
+const { spawn } = require('child_process');
+
+let activeProcess = null;
+
 wss.on('connection', (ws, req) => {
+    // ... existing connection logic ...
     // Basic Auth Check via URL params
     const url = new URL(req.url, `http://${req.headers.host}`);
     const token = url.searchParams.get('token');
@@ -122,6 +127,7 @@ wss.on('connection', (ws, req) => {
     ws.on('message', async (message) => {
         try {
             const request = JSON.parse(message);
+
             if (request.type === 'LLM_PROMPT') {
                 console.log(`[ANTGR-BRIDGE] AI Request: ${request.agent}`);
                 try {
@@ -140,6 +146,40 @@ wss.on('connection', (ws, req) => {
                         error: err
                     }));
                 }
+            } else if (request.type === 'START_TASK') {
+                if (activeProcess) {
+                    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task already running.' }));
+                    return;
+                }
+
+                console.log(`[ANTGR-BRIDGE] Starting task: ${request.command}`);
+                const [cmd, ...args] = request.command.split(' ');
+                activeProcess = spawn(cmd, args, { shell: true });
+
+                const sendLog = (data, isError = false) => {
+                    if (ws.readyState === ws.OPEN) {
+                        ws.send(JSON.stringify({
+                            type: 'PROCESS_LOG',
+                            data: data.toString(),
+                            isError: isError
+                        }));
+                    }
+                };
+
+                activeProcess.stdout.on('data', data => sendLog(data));
+                activeProcess.stderr.on('data', data => sendLog(data, true));
+                activeProcess.on('close', (code) => {
+                    console.log(`[ANTGR-BRIDGE] Task ended with code ${code}`);
+                    sendLog(`\n[TASK ENDED WITH CODE ${code}]`);
+                    activeProcess = null;
+                });
+
+            } else if (request.type === 'STOP_TASK') {
+                if (activeProcess) {
+                    activeProcess.kill();
+                    activeProcess = null;
+                    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task terminated.' }));
+                }
             }
         } catch (e) {
             console.error('[ANTGR-BRIDGE] Malformed message received');
@@ -148,6 +188,7 @@ wss.on('connection', (ws, req) => {
 
     ws.on('close', () => {
         console.log('[ANTGR-BRIDGE] Extension disconnected.');
+        if (activeProcess) activeProcess.kill();
         clearInterval(interval);
     });
 });

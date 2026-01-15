@@ -36,7 +36,10 @@ export class UXExpert {
                 </div>
                 <span class="ux-rec-label">${rec.label}</span>
             </div>
-            <button class="ux-action-btn" data-id="${rec.id}">DEPLOY</button>
+            <div class="ux-actions">
+                <button class="ux-action-btn" data-id="${rec.id}">DEPLOY</button>
+                <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
+            </div>
         `;
 
         if (this.container.querySelector('.ux-placeholder')) {
@@ -45,6 +48,13 @@ export class UXExpert {
 
         this.container.appendChild(card);
         card.querySelector('.ux-action-btn').addEventListener('click', () => this.executeAction(rec));
+        card.querySelector('.github-small').addEventListener('click', () => {
+            Bus.emit('devops_action', {
+                type: 'GITHUB_ISSUE',
+                title: `[ANTGR-UX] Design Recommendation`,
+                body: `Source: ${source}\nAgent: UX Specialist\nRecommendation: ${rec.label}`
+            });
+        });
         this.container.scrollTop = this.container.scrollHeight;
     }
 
@@ -116,11 +126,22 @@ export class CTOAuditor {
         const alert = document.createElement('div');
         alert.className = `cto-alert source-${source.toLowerCase()}`;
         alert.innerHTML = `
-            <span class="cto-alert-source">[${source}]</span>
-            <span class="cto-alert-type">[CTO: ${type}]</span>
-            <span class="cto-alert-msg">${message}</span>
+            <div class="cto-alert-main">
+                <span class="cto-alert-source">[${source}]</span>
+                <span class="cto-alert-type">[CTO: ${type}]</span>
+                <span class="cto-alert-msg">${message}</span>
+            </div>
+            <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
         `;
         this.container.prepend(alert);
+
+        alert.querySelector('.github-small').addEventListener('click', () => {
+            Bus.emit('devops_action', {
+                type: 'GITHUB_ISSUE',
+                title: `[ANTGR-${type}] Audit Finding`,
+                body: `Source: ${source}\nAgent: CTO\nFinding: ${message}`
+            });
+        });
 
         // Allow up to 4 alerts to show consensus from both brains
         if (this.container.children.length > 4) this.container.lastElementChild.remove();
