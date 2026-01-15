@@ -99,8 +99,9 @@ class BridgeClient {
     }
 
     connect() {
+        const token = "antgr_secret_v1_99";
         try {
-            this.socket = new WebSocket(this.url);
+            this.socket = new WebSocket(`${this.url}?token=${token}`);
 
             this.socket.onopen = () => {
                 State.bridgeStatus = 'ONLINE';

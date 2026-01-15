@@ -1,12 +1,22 @@
 {
     "name": "antgr-bridge",
-    "version": "1.0.0",
-    "description": "Local Agent Bridge for Antigravity Observer",
+    "version": "1.1.0",
     "main": "server.js",
+    "scripts": {
+        "start": "node server.js",
+        "build:exe": "pkg . --targets node18-win-x64 --output antigravity-bridge"
+    },
     "dependencies": {
         "ws": "^8.13.0"
     },
-    "scripts": {
-        "start": "node server.js"
+    "devDependencies": {
+        "pkg": "^5.8.1"
+    },
+    "bin": "server.js",
+    "pkg": {
+        "assets": [],
+        "targets": [
+            "node18-win-x64"
+        ]
     }
 }
