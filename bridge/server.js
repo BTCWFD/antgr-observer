@@ -2,6 +2,7 @@ const { WebSocketServer } = require('ws');
 const os = require('os');
 const { execSync, spawn } = require('child_process');
 const http = require('http');
+const https = require('https');
 const fs = require('fs');
 const path = require('path');
 require('dotenv').config();
@@ -10,6 +11,8 @@ const PORT = process.env.PORT || 3001;
 const AUTH_TOKEN = process.env.AUTH_TOKEN;
 const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || "phi3:mini";
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+const REMOTE_MODEL = process.env.REMOTE_MODEL || "gemini-1.5-flash";
 
 if (!AUTH_TOKEN) {
     console.error('[CRITICAL] AUTH_TOKEN not found in .env. Shutting down.');
@@ -49,7 +52,7 @@ function getDiskUsage() {
 }
 
 async function callOllama(prompt) {
-    console.log(`[ANTGR-BRIDGE] Calling Ollama for prompt: ${prompt.slice(0, 30)}...`);
+    console.log(`[ANTGR-BRIDGE] Calling Local Brain (Ollama)...`);
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({
             model: DEFAULT_MODEL,
@@ -62,6 +65,7 @@ async function callOllama(prompt) {
             port: 11434,
             path: '/api/generate',
             method: 'POST',
+            timeout: 5000, // 5s timeout for local
             headers: {
                 'Content-Type': 'application/json',
                 'Content-Length': Buffer.byteLength(data)
@@ -74,14 +78,62 @@ async function callOllama(prompt) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(body);
-                    resolve(parsed.response);
+                    if (parsed.response) resolve(parsed.response);
+                    else reject('Ollama Empty Response');
                 } catch (e) {
                     reject('Ollama Parse Error');
                 }
             });
         });
 
-        req.on('error', (e) => reject(`Ollama Connection Error: ${e.message}`));
+        req.on('timeout', () => {
+            req.destroy();
+            reject('Ollama Timeout');
+        });
+
+        req.on('error', (e) => reject(`Ollama Error: ${e.message}`));
+        req.write(data);
+        req.end();
+    });
+}
+
+async function callRemoteBrain(prompt) {
+    console.log(`[ANTGR-BRIDGE] Calling Remote Brain (Gemini)...`);
+    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY missing');
+
+    return new Promise((resolve, reject) => {
+        const data = JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }]
+        });
+
+        const options = {
+            hostname: 'generativelanguage.googleapis.com',
+            path: `/v1beta/models/${REMOTE_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Content-Length': Buffer.byteLength(data)
+            }
+        };
+
+        const req = https.request(options, (res) => {
+            let body = '';
+            res.on('data', (chunk) => body += chunk);
+            res.on('end', () => {
+                try {
+                    const parsed = JSON.parse(body);
+                    if (parsed.candidates && parsed.candidates[0].content.parts[0].text) {
+                        resolve(parsed.candidates[0].content.parts[0].text);
+                    } else {
+                        reject('Gemini API Error: ' + body);
+                    }
+                } catch (e) {
+                    reject('Gemini Parse Error');
+                }
+            });
+        });
+
+        req.on('error', (e) => reject(`Gemini Connection Error: ${e.message}`));
         req.write(data);
         req.end();
     });
@@ -126,13 +178,24 @@ function setupWss(wss) {
                 if (request.type === 'PING') return;
 
                 if (request.type === 'LLM_PROMPT') {
+                    console.log(`[ANTGR-BRIDGE] LLM_PROMPT received for ${request.agent}`);
                     try {
-                        const response = await callOllama(request.prompt);
-                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response }));
+                        // Hybrid Logic: Try Local first
+                        try {
+                            const response = await callOllama(request.prompt);
+                            ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response }));
+                        } catch (err) {
+                            console.warn(`[ANTGR-BRIDGE] Local Brain failed: ${err}. Failing over to Remote...`);
+                            // Fallback to Remote
+                            const response = await callRemoteBrain(request.prompt);
+                            ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'REMOTE', response: response }));
+                        }
                     } catch (err) {
-                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', error: err }));
+                        console.error(`[ANTGR-BRIDGE] Hybrid Brain Failure:`, err);
+                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'HYBRID', error: err }));
                     }
-                } else if (request.type === 'SCAN_CODEBASE') {
+                }
+                else if (request.type === 'SCAN_CODEBASE') {
                     const rootDir = path.join(__dirname, '..');
                     const fileMap = {};
                     const scanDir = (dir) => {
