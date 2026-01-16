@@ -283,21 +283,25 @@ function setupWss(wss) {
         console.log(`[ANTGR-BRIDGE] Extension authenticated from ${ip}.`);
         safeSend(ws, { type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' });
 
+        let lastDiskUsage = 0;
+        const diskInterval = setInterval(() => {
+            lastDiskUsage = getDiskUsage();
+        }, 30000); // Poll disk every 30s
+
         const telemetryInterval = setInterval(() => {
             const cpuUsage = os.loadavg()[0];
             const freeMem = os.freemem();
             const totalMem = os.totalmem();
             const memUsage = ((totalMem - freeMem) / totalMem) * 100;
-            const diskUsage = getDiskUsage();
             const uptime = Math.round(os.uptime() / 3600);
 
             if (ws.readyState === ws.OPEN) {
                 safeSend(ws, {
                     type: 'TELEMETRY',
-                    data: { cpu: cpuUsage.toFixed(1), memory: memUsage.toFixed(1), disk: diskUsage, uptime: uptime }
+                    data: { cpu: cpuUsage.toFixed(1), memory: memUsage.toFixed(1), disk: lastDiskUsage, uptime: uptime }
                 });
             }
-        }, 2000);
+        }, 5000); // Telemetry every 5s
 
         ws.on('message', async (message) => {
             try {
@@ -364,6 +368,7 @@ function setupWss(wss) {
         ws.on('close', () => {
             if (activeProcess) activeProcess.kill();
             clearInterval(telemetryInterval);
+            clearInterval(diskInterval);
         });
     });
 }
