@@ -5,6 +5,7 @@ const http = require('http');
 const https = require('https');
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 require('dotenv').config();
 
 const PORT = process.env.PORT || 3001;
@@ -13,27 +14,49 @@ const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generat
 const DEFAULT_MODEL = process.env.DEFAULT_MODEL || "phi3:mini";
 const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const REMOTE_MODEL = process.env.REMOTE_MODEL || "gemini-1.5-flash";
+const SERVER_PASSWORD = process.env.SERVER_PASSWORD;
 
 if (!AUTH_TOKEN) {
     console.error('[CRITICAL] AUTH_TOKEN not found in .env. Shutting down.');
     process.exit(1);
 }
 
-// --- Hardened WebSocket Initialization ---
-let wss;
-try {
-    wss = new WebSocketServer({ port: PORT });
-    console.log(`[ANTGR-BRIDGE] Mission Control Bridge started on ws://localhost:${PORT}`);
-    setupWss(wss);
-} catch (e) {
-    if (e.code === 'EADDRINUSE') {
-        console.warn(`[ANTGR-BRIDGE] PORT ${PORT} BUSY. Socket mode disabled, Native Messaging only.`);
-    } else {
-        console.error(`[ANTGR-BRIDGE] Failed to start WebSocket server:`, e);
+const runServer = () => {
+    let wss;
+    try {
+        wss = new WebSocketServer({ port: PORT });
+        console.log(`[ANTGR-BRIDGE] Mission Control Bridge started on ws://localhost:${PORT}`);
+        setupWss(wss);
+    } catch (e) {
+        if (e.code === 'EADDRINUSE') {
+            console.warn(`[ANTGR-BRIDGE] PORT ${PORT} BUSY. Socket mode disabled, Native Messaging only.`);
+        } else {
+            console.error(`[ANTGR-BRIDGE] Failed to start WebSocket server:`, e);
+        }
     }
-}
+    console.log(`[ANTGR-BRIDGE] Security: ENFORCED`);
+};
 
-console.log(`[ANTGR-BRIDGE] Security: ENFORCED`);
+if (SERVER_PASSWORD) {
+    const rl = readline.createInterface({
+        input: process.stdin,
+        output: process.stdout
+    });
+
+    console.log('\n[SECURITY] --- ANTIGRAVITY MISSION CONTROL AUTHENTICATION ---');
+    rl.question('[AUTH] Enter Admin Password to initiate Bridge: ', (input) => {
+        if (input === SERVER_PASSWORD) {
+            console.log('[AUTH] Access Granted. Initiating System...\n');
+            rl.close();
+            runServer();
+        } else {
+            console.error('[AUTH] ACCESS DENIED: Invalid Password. System shutdown.');
+            process.exit(1);
+        }
+    });
+} else {
+    runServer();
+}
 
 function getDiskUsage() {
     try {
@@ -120,15 +143,16 @@ async function callRemoteBrain(prompt) {
             let body = '';
             res.on('data', (chunk) => body += chunk);
             res.on('end', () => {
+                const sanitizedBody = body.replace(new RegExp(GEMINI_API_KEY, 'g'), '***REDACTED***');
                 try {
                     const parsed = JSON.parse(body);
                     if (parsed.candidates && parsed.candidates[0].content.parts[0].text) {
                         resolve(parsed.candidates[0].content.parts[0].text);
                     } else {
-                        reject('Gemini API Error: ' + body);
+                        reject('Gemini API Error: ' + sanitizedBody);
                     }
                 } catch (e) {
-                    reject('Gemini Parse Error');
+                    reject('Gemini Parse Error: ' + sanitizedBody);
                 }
             });
         });
