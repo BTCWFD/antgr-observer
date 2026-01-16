@@ -26,12 +26,35 @@ const SENSITIVE_VALUES = [GEMINI_API_KEY, AUTH_TOKEN, SERVER_PASSWORD].filter(Bo
 
 function applyRedaction(data) {
     if (!data) return data;
-    let str = typeof data === 'string' ? data : JSON.stringify(data);
-    SENSITIVE_VALUES.forEach(val => {
-        const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        str = str.replace(new RegExp(escaped, 'g'), '***REDACTED***');
-    });
-    return typeof data === 'string' ? str : JSON.parse(str);
+
+    // Pattern for Google API Keys: AIza + 35 characters
+    const KEY_PATTERN = /AIzaSy[A-Za-z0-9_-]{33}/g;
+
+    const sanitizeString = (str) => {
+        let result = str;
+        // 1. Static Redaction (Known IDs)
+        SENSITIVE_VALUES.forEach(val => {
+            const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            result = result.replace(new RegExp(escaped, 'g'), '***REDACTED***');
+        });
+        // 2. Pattern Redaction (Unknown or dynamic keys)
+        result = result.replace(KEY_PATTERN, '***PATTERN_LEAK_BLOCKED***');
+        return result;
+    };
+
+    if (Buffer.isBuffer(data)) {
+        return Buffer.from(sanitizeString(data.toString()));
+    }
+
+    if (typeof data !== 'string') {
+        try {
+            return JSON.parse(sanitizeString(JSON.stringify(data)));
+        } catch (e) {
+            return data;
+        }
+    }
+
+    return sanitizeString(data);
 }
 
 // 1. Console Redaction
