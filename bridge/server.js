@@ -21,6 +21,35 @@ if (!AUTH_TOKEN) {
     process.exit(1);
 }
 
+// --- SECURITY HARDENING: Multi-Layer Redaction ---
+const SENSITIVE_VALUES = [GEMINI_API_KEY, AUTH_TOKEN, SERVER_PASSWORD].filter(Boolean);
+
+function applyRedaction(data) {
+    if (!data) return data;
+    let str = typeof data === 'string' ? data : JSON.stringify(data);
+    SENSITIVE_VALUES.forEach(val => {
+        const escaped = val.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        str = str.replace(new RegExp(escaped, 'g'), '***REDACTED***');
+    });
+    return typeof data === 'string' ? str : JSON.parse(str);
+}
+
+// 1. Console Redaction
+const originalLog = console.log;
+const originalError = console.error;
+const originalWarn = console.warn;
+
+console.log = (...args) => originalLog(...args.map(applyRedaction));
+console.error = (...args) => originalError(...args.map(applyRedaction));
+console.warn = (...args) => originalWarn(...args.map(applyRedaction));
+
+// 2. WebSocket Safe Send
+function safeSend(ws, data) {
+    if (ws.readyState === ws.OPEN) {
+        ws.send(JSON.stringify(applyRedaction(data)));
+    }
+}
+
 const runServer = () => {
     let wss;
     try {
@@ -143,16 +172,15 @@ async function callRemoteBrain(prompt) {
             let body = '';
             res.on('data', (chunk) => body += chunk);
             res.on('end', () => {
-                const sanitizedBody = body.replace(new RegExp(GEMINI_API_KEY, 'g'), '***REDACTED***');
                 try {
                     const parsed = JSON.parse(body);
                     if (parsed.candidates && parsed.candidates[0].content.parts[0].text) {
                         resolve(parsed.candidates[0].content.parts[0].text);
                     } else {
-                        reject('Gemini API Error: ' + sanitizedBody);
+                        reject('Gemini API Error: ' + JSON.stringify(parsed));
                     }
                 } catch (e) {
-                    reject('Gemini Parse Error: ' + sanitizedBody);
+                    reject('Gemini Parse Error: ' + body);
                 }
             });
         });
@@ -172,13 +200,13 @@ function setupWss(wss) {
 
         if (token !== AUTH_TOKEN) {
             console.log('[ANTGR-BRIDGE] Unauthorized connection attempt rejected.');
-            ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'ACCESS DENIED: Invalid Token' }));
+            safeSend(ws, { type: 'SYSTEM', msg: 'ACCESS DENIED: Invalid Token' });
             setTimeout(() => ws.close(), 100);
             return;
         }
 
         console.log('[ANTGR-BRIDGE] Extension authenticated.');
-        ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' }));
+        safeSend(ws, { type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' });
 
         const telemetryInterval = setInterval(() => {
             const cpuUsage = os.loadavg()[0];
@@ -189,10 +217,10 @@ function setupWss(wss) {
             const uptime = Math.round(os.uptime() / 3600);
 
             if (ws.readyState === ws.OPEN) {
-                ws.send(JSON.stringify({
+                safeSend(ws, {
                     type: 'TELEMETRY',
                     data: { cpu: cpuUsage.toFixed(1), memory: memUsage.toFixed(1), disk: diskUsage, uptime: uptime }
-                }));
+                });
             }
         }, 2000);
 
@@ -207,16 +235,16 @@ function setupWss(wss) {
                         // Hybrid Logic: Try Local first
                         try {
                             const response = await callOllama(request.prompt);
-                            ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response }));
+                            safeSend(ws, { type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response });
                         } catch (err) {
                             console.warn(`[ANTGR-BRIDGE] Local Brain failed: ${err}. Failing over to Remote...`);
                             // Fallback to Remote
                             const response = await callRemoteBrain(request.prompt);
-                            ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'REMOTE', response: response }));
+                            safeSend(ws, { type: 'LLM_RESPONSE', agent: request.agent, source: 'REMOTE', response: response });
                         }
                     } catch (err) {
                         console.error(`[ANTGR-BRIDGE] Hybrid Brain Failure:`, err);
-                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'HYBRID', error: err }));
+                        safeSend(ws, { type: 'LLM_RESPONSE', agent: request.agent, source: 'HYBRID', error: err });
                     }
                 }
                 else if (request.type === 'SCAN_CODEBASE') {
@@ -235,16 +263,16 @@ function setupWss(wss) {
                         });
                     };
                     scanDir(rootDir);
-                    ws.send(JSON.stringify({ type: 'CODEBASE_INDEX', files: fileMap }));
+                    safeSend(ws, { type: 'CODEBASE_INDEX', files: fileMap });
                 } else if (request.type === 'START_TASK') {
                     if (activeProcess) {
-                        ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task already running.' }));
+                        safeSend(ws, { type: 'SYSTEM', msg: 'Task already running.' });
                         return;
                     }
                     const [cmd, ...args] = request.command.split(' ');
                     activeProcess = spawn(cmd, args, { shell: true });
                     const sendLog = (data, isError = false) => {
-                        if (ws.readyState === ws.OPEN) ws.send(JSON.stringify({ type: 'PROCESS_LOG', data: data.toString(), isError }));
+                        safeSend(ws, { type: 'PROCESS_LOG', data: data.toString(), isError });
                     };
                     activeProcess.stdout.on('data', data => sendLog(data));
                     activeProcess.stderr.on('data', data => sendLog(data, true));
@@ -253,7 +281,7 @@ function setupWss(wss) {
                         activeProcess = null;
                     });
                 } else if (request.type === 'STOP_TASK') {
-                    if (activeProcess) { activeProcess.kill(); activeProcess = null; ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task terminated.' })); }
+                    if (activeProcess) { activeProcess.kill(); activeProcess = null; safeSend(ws, { type: 'SYSTEM', msg: 'Task terminated.' }); }
                 }
             } catch (e) { console.error('[ANTGR-BRIDGE] Message error:', e); }
         });
@@ -277,7 +305,7 @@ process.stdin.on('readable', () => {
 });
 
 function sendNativeMessage(obj) {
-    const payload = Buffer.from(JSON.stringify(obj));
+    const payload = Buffer.from(JSON.stringify(applyRedaction(obj)));
     const header = Buffer.alloc(4);
     header.writeUInt32LE(payload.length, 0);
     process.stdout.write(header);
