@@ -3,7 +3,6 @@ import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
 import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
 import { CTOAuditor, UXExpert } from './modules/Agents.js';
-import { Stress } from './modules/StressAgent.js';
 
 // --- Initialization ---
 
@@ -76,36 +75,6 @@ async function init() {
         });
     }
 
-    // Stress Test Listener
-    const stressBtn = document.getElementById('stress-btn');
-    const syncStressUI = () => {
-        if (!stressBtn) return;
-        if (State.stressActive) {
-            stressBtn.textContent = 'TERMINATE STRESS';
-            stressBtn.classList.add('stressing');
-        } else {
-            stressBtn.textContent = 'STRESS TEST';
-            stressBtn.classList.remove('stressing');
-        }
-    };
-
-    if (stressBtn) {
-        stressBtn.addEventListener('click', () => {
-            if (State.stressActive) {
-                Stress.stop();
-                Bus.emit('log', { msg: 'Manual Override: Stress Test Terminated.', type: 'success' });
-            } else {
-                Stress.start();
-                Bus.emit('log', { msg: 'Manual Override: Stress Test Initiated.', type: 'warning' });
-            }
-            syncStressUI();
-            updateUI();
-            saveState();
-        });
-    }
-
-    // Initial Stress UI Sync
-    syncStressUI();
 
     // Accordion Logic
     document.querySelectorAll('.node-header').forEach(header => {
