@@ -54,6 +54,27 @@
   animation: flash-success 0.5s ease-out;
 }
 
+/* Inline Spinner */
+.spinner-inline {
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(0, 242, 255, 0.2);
+  border-top: 2px solid var(--neon-cyan);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  display: none; /* Hidden by default */
+  margin-left: 8px;
+}
+
+.spinner-inline.active {
+  display: inline-block;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
 .views-wrapper {
   display: flex;
   width: 200%;

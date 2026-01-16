@@ -87,11 +87,45 @@ export class UXExpert {
 
     async askAI(context) {
         // Trigger LOCAL audit
-        const prompt = `Como experto UX en una misión crítica, analiza este log: "${context}". Da una recomendación técnica corta de diseño o UX. Formato: { "label": "...", "type": "plugin|button|style" }`;
+        const prompt = `Como experto UX en una misión crítica, analiza este evento: "${context}". 
+        Da una recomendación técnica corta de diseño o UX. 
+        IMPORTANTE: Implementa un indicador de progreso (spinner o barra de carga) vinculado visualmente para mitigar la ansiedad del usuario.
+        Formato JSON: { "label": "...", "type": "plugin|button|style" }`;
         Bridge.sendAIRequest('UX', prompt);
+    }
+}
 
-        // Trigger REMOTE audit
-        Bridge.requestRemoteInsight('UX', context);
+/**
+ * PredictiveInsightAgent: Analyzes trends and predicts next steps.
+ */
+export class PredictiveInsightAgent {
+    constructor(containerId) {
+        this.container = document.getElementById(containerId);
+        Bus.on('ui_update', () => this.updateUI());
+    }
+
+    report(message, source = 'LOCAL') {
+        if (!this.container) return;
+        const div = document.createElement('div');
+        div.className = `insight-item source-${source.toLowerCase()}`;
+        div.innerHTML = `<span class="insight-label">[PREDICTIVE]</span> ${message}`;
+
+        if (this.container.querySelector('.insight-placeholder')) {
+            this.container.innerHTML = '';
+        }
+
+        this.container.prepend(div);
+        if (this.container.children.length > 5) this.container.lastElementChild.remove();
+    }
+
+    updateUI() {
+        // Dynamic logic for UI if needed
+    }
+
+    async askAI(context) {
+        const prompt = `Como analista predictivo de Antigravity, analiza este flujo: "${context}". 
+        Predice un posible cuello de botella o riesgo futuro y da una sugerencia corta.`;
+        Bridge.sendAIRequest('INSIGHTS', prompt);
     }
 }
 
@@ -149,10 +183,8 @@ export class CTOAuditor {
 
     async askAI(context) {
         // Trigger LOCAL audit (Brain Bridge)
-        const localPrompt = `Como CTO de Antigravity, analiza este evento: "${context}". Dame una recomendación técnica crítica y corta (máximo 15 palabras).`;
+        const localPrompt = `Como CTO de Antigravity, realiza una auditoría continua (DAST) y de cumplimiento ético sobre este evento: "${context}". 
+        Busca vectores de inyección futuros y desviaciones éticas. Dame una recomendación técnica crítica y corta (máximo 15 palabras).`;
         Bridge.sendAIRequest('CTO', localPrompt);
-
-        // Trigger REMOTE audit (simulated cloud brain)
-        Bridge.requestRemoteInsight('CTO', context);
     }
 }

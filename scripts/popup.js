@@ -2,11 +2,11 @@ import { State } from './modules/State.js';
 import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
 import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
-import { CTOAuditor, UXExpert } from './modules/Agents.js';
+import { CTOAuditor, UXExpert, PredictiveInsightAgent } from './modules/Agents.js';
 
 // --- Initialization ---
 
-let Logger, Terminal, Auditor, UX, DevOpsTerminal;
+let Logger, Terminal, Auditor, UX, Insights, DevOpsTerminal;
 let tokenSpark, costSpark, securitySpark;
 
 document.addEventListener('DOMContentLoaded', init);
@@ -17,6 +17,7 @@ async function init() {
     DevOpsTerminal = new TerminalManager('devops-terminal');
     Auditor = new CTOAuditor('cto-panel', 'cto-status');
     UX = new UXExpert('ux-recommendations', 'ux-score');
+    Insights = new PredictiveInsightAgent('insights-panel');
 
     // Initialize Sparklines
     tokenSpark = new Sparkline('tokens-sparkline', '#00f2ff');
@@ -154,6 +155,9 @@ function handleAIResponse(data) {
             UX.addRecommendation({ id: `ai-${Date.now()}`, source, label: data.response, type: 'button' });
         }
         autoExpandNode('ux');
+    } else if (data.agent === 'INSIGHTS') {
+        Insights.report(data.response, source);
+        autoExpandNode('insights');
     }
 }
 
@@ -164,6 +168,7 @@ async function runWorkspaceSync() {
     State.isScanning = true;
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'SCANNING...';
+    document.getElementById('sync-spinner')?.classList.add('active');
     Terminal.clear();
 
     Bus.emit('cto_audit_start');
@@ -226,6 +231,9 @@ async function runWorkspaceSync() {
             State.uxScore -= 2;
         }
 
+        // Trigger insights
+        if (Insights) Insights.askAI(`${step.msg} (Term: ${step.term})`);
+
         State.progress += (100 / sequence.length);
         State.tokens += step.tokens;
         State.cost = (State.tokens / 1000) * 0.002;
@@ -243,6 +251,7 @@ async function runWorkspaceSync() {
     State.progress = 100;
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'SYNC WORKSPACE';
+    document.getElementById('sync-spinner')?.classList.remove('active');
     updateUI();
     saveState();
 }

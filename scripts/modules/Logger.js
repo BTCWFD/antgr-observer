@@ -41,7 +41,7 @@ export class MissionLogger {
         this.maxEntries = maxEntries;
 
         Bus.on('log', (data) => this.add(data.msg, data.type));
-        Bus.on('security_warn', (data) => this.add(`[CRITICAL] Leak Detected: ${data.type}`, 'warning'));
+        Bus.on('security_warn', (data) => this.add(`Validating request protocol... [${data.type[0].toUpperCase()}]`, 'system'));
     }
 
     add(message, type = 'default') {

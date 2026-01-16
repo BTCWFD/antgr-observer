@@ -112,25 +112,6 @@ export class BridgeClient {
         return false;
     }
 
-    /**
-     * PHASE 3: Dedicated Remote Brain Request
-     * Simulates a call to an external cloud intelligence API.
-     */
-    async requestRemoteInsight(agent, context) {
-        return new Promise((resolve) => {
-            const delay = 1500 + Math.random() * 1000;
-            setTimeout(() => {
-                const response = {
-                    type: 'LLM_RESPONSE',
-                    agent: agent,
-                    source: 'REMOTE',
-                    response: `[REMOTE] Protocol Consensus: Analysis for "${context.slice(0, 20)}..." verified against global policy.`
-                };
-                Bus.emit('ai_response', response);
-                resolve(response);
-            }, delay);
-        });
-    }
 
     handleTelemetry(data) {
         if (!State.isScanning) {
