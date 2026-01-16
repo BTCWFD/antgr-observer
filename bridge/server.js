@@ -21,6 +21,47 @@ if (!AUTH_TOKEN) {
     process.exit(1);
 }
 
+// --- SECURITY HARDENING: BanManager (Mini-Fail2Ban) ---
+class BanManager {
+    constructor() {
+        this.attempts = new Map(); // ip -> { count, lastAttempt }
+        this.bannedUntil = new Map(); // ip -> timestamp
+        this.MAX_ATTEMPTS = 3;
+        this.BAN_DURATION = 10 * 60 * 1000; // 10 minutes
+    }
+
+    isBanned(ip) {
+        const banExpiry = this.bannedUntil.get(ip);
+        if (banExpiry && Date.now() < banExpiry) return true;
+        if (banExpiry) this.bannedUntil.delete(ip);
+        return false;
+    }
+
+    recordFailure(ip) {
+        const now = Date.now();
+        const data = this.attempts.get(ip) || { count: 0, lastAttempt: 0 };
+
+        // Reset count if last attempt was more than 30 mins ago
+        if (now - data.lastAttempt > 30 * 60 * 1000) data.count = 0;
+
+        data.count++;
+        data.lastAttempt = now;
+        this.attempts.set(ip, data);
+
+        if (data.count >= this.MAX_ATTEMPTS) {
+            console.error(`[SECURITY] HIGH FAILURE RATE: IP ${ip} BANNED for ${this.BAN_DURATION / 60000} mins.`);
+            this.bannedUntil.set(ip, now + this.BAN_DURATION);
+            this.attempts.delete(ip);
+        }
+    }
+
+    recordSuccess(ip) {
+        this.attempts.delete(ip);
+    }
+}
+
+const banManager = new BanManager();
+
 // --- SECURITY HARDENING: Multi-Layer Redaction ---
 const SENSITIVE_VALUES = [GEMINI_API_KEY, AUTH_TOKEN, SERVER_PASSWORD].filter(Boolean);
 
@@ -218,17 +259,28 @@ function setupWss(wss) {
     let activeProcess = null;
 
     wss.on('connection', (ws, req) => {
+        const ip = req.socket.remoteAddress;
+
+        if (banManager.isBanned(ip)) {
+            console.log(`[SECURITY] REJECTED: Banned IP ${ip} attempted connection.`);
+            ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'ACCESS DENIED: IP Temporarily Banned' }));
+            setTimeout(() => ws.close(), 100);
+            return;
+        }
+
         const url = new URL(req.url, `http://${req.headers.host}`);
         const token = url.searchParams.get('token');
 
         if (token !== AUTH_TOKEN) {
-            console.log('[ANTGR-BRIDGE] Unauthorized connection attempt rejected.');
+            console.log(`[ANTGR-BRIDGE] Unauthorized attempt from ${ip}.`);
+            banManager.recordFailure(ip);
             safeSend(ws, { type: 'SYSTEM', msg: 'ACCESS DENIED: Invalid Token' });
             setTimeout(() => ws.close(), 100);
             return;
         }
 
-        console.log('[ANTGR-BRIDGE] Extension authenticated.');
+        banManager.recordSuccess(ip);
+        console.log(`[ANTGR-BRIDGE] Extension authenticated from ${ip}.`);
         safeSend(ws, { type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' });
 
         const telemetryInterval = setInterval(() => {
