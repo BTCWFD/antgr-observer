@@ -1,6 +1,6 @@
 const { WebSocketServer } = require('ws');
 const os = require('os');
-const { execSync } = require('child_process');
+const { execSync, spawn } = require('child_process');
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
@@ -16,16 +16,26 @@ if (!AUTH_TOKEN) {
     process.exit(1);
 }
 
-const wss = new WebSocketServer({ port: PORT });
+// --- Hardened WebSocket Initialization ---
+let wss;
+try {
+    wss = new WebSocketServer({ port: PORT });
+    console.log(`[ANTGR-BRIDGE] Mission Control Bridge started on ws://localhost:${PORT}`);
+    setupWss(wss);
+} catch (e) {
+    if (e.code === 'EADDRINUSE') {
+        console.warn(`[ANTGR-BRIDGE] PORT ${PORT} BUSY. Socket mode disabled, Native Messaging only.`);
+    } else {
+        console.error(`[ANTGR-BRIDGE] Failed to start WebSocket server:`, e);
+    }
+}
 
-console.log(`[ANTGR-BRIDGE] Mission Control Bridge started on ws://localhost:${PORT}`);
 console.log(`[ANTGR-BRIDGE] Security: ENFORCED`);
 
 function getDiskUsage() {
     try {
         if (process.platform === 'win32') {
             const output = execSync('wmic logicaldisk get size,freespace,caption').toString();
-            // Simple parser for first disk
             const lines = output.trim().split('\n').filter(l => l.includes('C:'));
             if (lines.length > 0) {
                 const parts = lines[0].trim().split(/\s+/);
@@ -64,187 +74,121 @@ async function callOllama(prompt) {
             res.on('end', () => {
                 try {
                     const parsed = JSON.parse(body);
-                    console.log(`[ANTGR-BRIDGE] Ollama response received.`);
                     resolve(parsed.response);
                 } catch (e) {
-                    console.error(`[ANTGR-BRIDGE] Ollama Parse Error:`, e);
                     reject('Ollama Parse Error');
                 }
             });
         });
 
-        req.on('error', (e) => {
-            console.error(`[ANTGR-BRIDGE] Ollama Connection Error:`, e.message);
-            reject(`Ollama Connection Error: ${e.message}`);
-        });
-
+        req.on('error', (e) => reject(`Ollama Connection Error: ${e.message}`));
         req.write(data);
         req.end();
     });
 }
 
-const { spawn } = require('child_process');
+function setupWss(wss) {
+    let activeProcess = null;
 
-let activeProcess = null;
+    wss.on('connection', (ws, req) => {
+        const url = new URL(req.url, `http://${req.headers.host}`);
+        const token = url.searchParams.get('token');
 
-wss.on('connection', (ws, req) => {
-    // ... existing connection logic ...
-    // Basic Auth Check via URL params
-    const url = new URL(req.url, `http://${req.headers.host}`);
-    const token = url.searchParams.get('token');
-
-    if (token !== AUTH_TOKEN) {
-        console.log('[ANTGR-BRIDGE] Unauthorized connection attempt rejected.');
-        ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'ACCESS DENIED: Invalid Token' }));
-        setTimeout(() => ws.close(), 100);
-        return;
-    }
-
-    console.log('[ANTGR-BRIDGE] Extension authenticated.');
-    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' }));
-
-    const interval = setInterval(() => {
-        const cpuUsage = os.loadavg()[0]; // 1 min average
-        const freeMem = os.freemem();
-        const totalMem = os.totalmem();
-        const memUsage = ((totalMem - freeMem) / totalMem) * 100;
-        const diskUsage = getDiskUsage();
-        const uptime = Math.round(os.uptime() / 3600); // hours
-
-        const payload = {
-            type: 'TELEMETRY',
-            data: {
-                cpu: cpuUsage.toFixed(1),
-                memory: memUsage.toFixed(1),
-                disk: diskUsage,
-                uptime: uptime
-            }
-        };
-
-        if (ws.readyState === ws.OPEN) {
-            ws.send(JSON.stringify(payload));
+        if (token !== AUTH_TOKEN) {
+            console.log('[ANTGR-BRIDGE] Unauthorized connection attempt rejected.');
+            ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'ACCESS DENIED: Invalid Token' }));
+            setTimeout(() => ws.close(), 100);
+            return;
         }
-    }, 2000);
 
-    ws.on('message', async (message) => {
-        try {
-            const request = JSON.parse(message);
+        console.log('[ANTGR-BRIDGE] Extension authenticated.');
+        ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Connection Secure. Brain Bridge Active.' }));
 
-            if (request.type === 'LLM_PROMPT') {
-                console.log(`[ANTGR-BRIDGE] AI Request: ${request.agent}`);
-                try {
-                    const response = await callOllama(request.prompt);
-                    ws.send(JSON.stringify({
-                        type: 'LLM_RESPONSE',
-                        agent: request.agent,
-                        source: 'LOCAL',
-                        response: response
-                    }));
-                } catch (err) {
-                    ws.send(JSON.stringify({
-                        type: 'LLM_RESPONSE',
-                        agent: request.agent,
-                        source: 'LOCAL',
-                        error: err
-                    }));
-                }
-            } else if (request.type === 'SCAN_CODEBASE') {
-                console.log(`[ANTGR-BRIDGE] Indexing codebase context...`);
-                const rootDir = path.join(__dirname, '..');
-                const fileMap = {};
+        const telemetryInterval = setInterval(() => {
+            const cpuUsage = os.loadavg()[0];
+            const freeMem = os.freemem();
+            const totalMem = os.totalmem();
+            const memUsage = ((totalMem - freeMem) / totalMem) * 100;
+            const diskUsage = getDiskUsage();
+            const uptime = Math.round(os.uptime() / 3600);
 
-                const scanDir = (dir) => {
-                    const files = fs.readdirSync(dir);
-                    files.forEach(file => {
-                        const fullPath = path.join(dir, file);
-                        const relPath = path.relative(rootDir, fullPath);
+            if (ws.readyState === ws.OPEN) {
+                ws.send(JSON.stringify({
+                    type: 'TELEMETRY',
+                    data: { cpu: cpuUsage.toFixed(1), memory: memUsage.toFixed(1), disk: diskUsage, uptime: uptime }
+                }));
+            }
+        }, 2000);
 
-                        if (file === 'node_modules' || file === '.git' || file === 'dist' || file === 'bridge' || file === 'icons') return;
+        ws.on('message', async (message) => {
+            try {
+                const request = JSON.parse(message);
+                if (request.type === 'PING') return;
 
-                        const stats = fs.statSync(fullPath);
-                        if (stats.isDirectory()) {
-                            scanDir(fullPath);
-                        } else if (['.js', '.html', '.css', '.md'].includes(path.extname(file))) {
-                            fileMap[relPath] = fs.readFileSync(fullPath, 'utf8').substring(0, 5000); // Sample first 5k chars
-                        }
-                    });
-                };
-
-                try {
-                    scanDir(rootDir);
-                    ws.send(JSON.stringify({
-                        type: 'CODEBASE_INDEX',
-                        files: fileMap
-                    }));
-                } catch (err) {
-                    console.error('[ANTGR-BRIDGE] Scan error:', err);
-                }
-
-            } else if (request.type === 'START_TASK') {
-                if (activeProcess) {
-                    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task already running.' }));
-                    return;
-                }
-
-                console.log(`[ANTGR-BRIDGE] Starting task: ${request.command}`);
-                const [cmd, ...args] = request.command.split(' ');
-                activeProcess = spawn(cmd, args, { shell: true });
-
-                const sendLog = (data, isError = false) => {
-                    if (ws.readyState === ws.OPEN) {
-                        ws.send(JSON.stringify({
-                            type: 'PROCESS_LOG',
-                            data: data.toString(),
-                            isError: isError
-                        }));
+                if (request.type === 'LLM_PROMPT') {
+                    try {
+                        const response = await callOllama(request.prompt);
+                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response }));
+                    } catch (err) {
+                        ws.send(JSON.stringify({ type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', error: err }));
                     }
-                };
-
-                activeProcess.stdout.on('data', data => sendLog(data));
-                activeProcess.stderr.on('data', data => sendLog(data, true));
-                activeProcess.on('close', (code) => {
-                    console.log(`[ANTGR-BRIDGE] Task ended with code ${code}`);
-                    sendLog(`\n[TASK ENDED WITH CODE ${code}]`);
-                    activeProcess = null;
-                });
-
-            } else if (request.type === 'STOP_TASK') {
-                if (activeProcess) {
-                    activeProcess.kill();
-                    activeProcess = null;
-                    ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task terminated.' }));
+                } else if (request.type === 'SCAN_CODEBASE') {
+                    const rootDir = path.join(__dirname, '..');
+                    const fileMap = {};
+                    const scanDir = (dir) => {
+                        fs.readdirSync(dir).forEach(file => {
+                            const fullPath = path.join(dir, file);
+                            const relPath = path.relative(rootDir, fullPath);
+                            if (['node_modules', '.git', 'dist', 'bridge', 'icons'].includes(file)) return;
+                            const stats = fs.statSync(fullPath);
+                            if (stats.isDirectory()) scanDir(fullPath);
+                            else if (['.js', '.html', '.css', '.md'].includes(path.extname(file))) {
+                                fileMap[relPath] = fs.readFileSync(fullPath, 'utf8').substring(0, 5000);
+                            }
+                        });
+                    };
+                    scanDir(rootDir);
+                    ws.send(JSON.stringify({ type: 'CODEBASE_INDEX', files: fileMap }));
+                } else if (request.type === 'START_TASK') {
+                    if (activeProcess) {
+                        ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task already running.' }));
+                        return;
+                    }
+                    const [cmd, ...args] = request.command.split(' ');
+                    activeProcess = spawn(cmd, args, { shell: true });
+                    const sendLog = (data, isError = false) => {
+                        if (ws.readyState === ws.OPEN) ws.send(JSON.stringify({ type: 'PROCESS_LOG', data: data.toString(), isError }));
+                    };
+                    activeProcess.stdout.on('data', data => sendLog(data));
+                    activeProcess.stderr.on('data', data => sendLog(data, true));
+                    activeProcess.on('close', (code) => {
+                        sendLog(`\n[TASK ENDED WITH CODE ${code}]`);
+                        activeProcess = null;
+                    });
+                } else if (request.type === 'STOP_TASK') {
+                    if (activeProcess) { activeProcess.kill(); activeProcess = null; ws.send(JSON.stringify({ type: 'SYSTEM', msg: 'Task terminated.' })); }
                 }
-            }
-        } catch (e) {
-            console.error('[ANTGR-BRIDGE] Malformed message received');
-        }
-    });
+            } catch (e) { console.error('[ANTGR-BRIDGE] Message error:', e); }
+        });
 
-    ws.on('close', () => {
-        console.log('[ANTGR-BRIDGE] Extension disconnected.');
-        if (activeProcess) activeProcess.kill();
-        clearInterval(interval);
+        ws.on('close', () => {
+            if (activeProcess) activeProcess.kill();
+            clearInterval(telemetryInterval);
+        });
     });
-});
+}
 
 process.on('SIGINT', () => {
-    console.log('[ANTGR-BRIDGE] Shutting down bridge...');
-    wss.close(() => {
-        process.exit();
-    });
+    if (wss) wss.close(() => process.exit());
+    else process.exit();
 });
 
 // --- Native Messaging Protocol Support ---
-// This allows Chrome to launch the EXE directly via stdio
 process.stdin.on('readable', () => {
     let input = process.stdin.read();
-    if (input) {
-        // We just ignore the content for now, but keeping the pipe open
-        // prevents Chrome from killing the process.
-    }
+    if (input) { /* Keep pipe open */ }
 });
 
-// Send a simple "Hello" in Native Messaging format to keep Chrome happy
 function sendNativeMessage(obj) {
     const payload = Buffer.from(JSON.stringify(obj));
     const header = Buffer.alloc(4);
@@ -253,7 +197,6 @@ function sendNativeMessage(obj) {
     process.stdout.write(payload);
 }
 
-// Optional: Identify as native host
 if (process.send || !process.stdout.isTTY) {
     setInterval(() => {
         sendNativeMessage({ type: 'HEARTBEAT', status: 'ONLINE' });

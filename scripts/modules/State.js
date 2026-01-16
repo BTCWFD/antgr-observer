@@ -13,6 +13,8 @@ export const State = {
     recommendations: [],
     isTaskRunning: false,
     devopsLogs: [],
-    authKey: "antgr_secret_v1_99", // Default for initial connection
-    codebaseIndex: {}
+    authKey: "antgr_secret_v1_99",
+    codebaseIndex: {},
+    lastConnected: null,
+    connectionAttempts: 0
 };

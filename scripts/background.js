@@ -55,7 +55,12 @@ function launchBridge() {
             console.log('[ANTGR] Native Bridge Heartbeat:', msg);
         });
         port.onDisconnect.addListener(() => {
-            console.log('[ANTGR] Native connection lost. Bridge may have closed.');
+            const error = chrome.runtime.lastError;
+            if (error) {
+                console.warn('[ANTGR] Native connection error:', error.message);
+            } else {
+                console.log('[ANTGR] Native connection closed.');
+            }
         });
     } catch (e) {
         console.error('[ANTGR] Native launch failed:', e);
