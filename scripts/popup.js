@@ -169,6 +169,8 @@ async function runWorkspaceSync() {
     refreshBtn.disabled = true;
     refreshBtn.textContent = 'SCANNING...';
     document.getElementById('sync-spinner')?.classList.add('active');
+    document.querySelector('.progress-bar')?.classList.add('marquee');
+    document.getElementById('mission-log')?.classList.add('skeleton-text');
     Terminal.clear();
 
     Bus.emit('cto_audit_start');
@@ -252,6 +254,8 @@ async function runWorkspaceSync() {
     refreshBtn.disabled = false;
     refreshBtn.textContent = 'SYNC WORKSPACE';
     document.getElementById('sync-spinner')?.classList.remove('active');
+    document.querySelector('.progress-bar')?.classList.remove('marquee');
+    document.getElementById('mission-log')?.classList.remove('skeleton-text');
     updateUI();
     saveState();
 }

@@ -156,7 +156,7 @@ export class CTOAuditor {
     }
 
     report(type, message, source = 'LOCAL') {
-        if (!this.active) return;
+        // We removed the this.active check to ensure late AI responses are still displayed
         const alert = document.createElement('div');
         alert.className = `cto-alert source-${source.toLowerCase()}`;
         alert.innerHTML = `
