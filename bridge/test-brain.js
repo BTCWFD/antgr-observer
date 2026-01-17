@@ -1,6 +1,6 @@
 const WebSocket = require('ws');
 
-const url = 'ws://localhost:3000?token=antgr_secret_v1_99';
+const url = 'ws://localhost:3001?token=antgr_secret_v1_99';
 const ws = new WebSocket(url);
 
 ws.on('open', () => {

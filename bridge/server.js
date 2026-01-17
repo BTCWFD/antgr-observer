@@ -6,15 +6,19 @@ const https = require('https');
 const fs = require('fs');
 const path = require('path');
 const readline = require('readline');
-require('dotenv').config();
+const dotenv = require('dotenv');
 
-const PORT = process.env.PORT || 3001;
-const AUTH_TOKEN = process.env.AUTH_TOKEN;
-const OLLAMA_URL = process.env.OLLAMA_URL || "http://localhost:11434/api/generate";
-const DEFAULT_MODEL = process.env.DEFAULT_MODEL || "phi3:mini";
-const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
-const REMOTE_MODEL = process.env.REMOTE_MODEL || "gemini-1.5-flash";
-const SERVER_PASSWORD = process.env.SERVER_PASSWORD;
+// --- Configuration & Initialization ---
+dotenv.config();
+
+// We use let instead of const for things we want to update dynamically
+let PORT = process.env.PORT || 3001;
+let AUTH_TOKEN = process.env.AUTH_TOKEN;
+let OLLAMA_URL = process.env.OLLAMA_URL || 'http://localhost:11434/api/generate';
+let DEFAULT_MODEL = process.env.DEFAULT_MODEL || 'llama3:latest';
+let GEMINI_API_KEY = process.env.GEMINI_API_KEY;
+let REMOTE_MODEL = process.env.REMOTE_MODEL || 'gemini-1.5-flash';
+let SERVER_PASSWORD = process.env.SERVER_PASSWORD;
 
 if (!AUTH_TOKEN) {
     console.error('[CRITICAL] AUTH_TOKEN not found in .env. Shutting down.');
@@ -214,8 +218,16 @@ async function callOllama(prompt) {
 }
 
 async function callRemoteBrain(prompt) {
-    console.log(`[ANTGR-BRIDGE] Calling Remote Brain (Gemini)...`);
-    if (!GEMINI_API_KEY) throw new Error('GEMINI_API_KEY missing');
+    const model = (REMOTE_MODEL || "gemini-2.5-flash").trim();
+    const apiKey = (GEMINI_API_KEY || "").trim();
+
+    if (!apiKey) throw new Error('GEMINI_API_KEY missing');
+
+    // Normalize model name
+    const cleanModel = model.replace(/^models\//, '');
+
+    console.log(`[ANTGR-BRIDGE] Calling Remote Brain (Gemini: ${cleanModel}) via v1...`);
+    console.log(`[DEBUG] Full URL Path: /v1/models/${cleanModel}:generateContent?key=${apiKey.substring(0, 5)}...`);
 
     return new Promise((resolve, reject) => {
         const data = JSON.stringify({
@@ -224,11 +236,10 @@ async function callRemoteBrain(prompt) {
 
         const options = {
             hostname: 'generativelanguage.googleapis.com',
-            path: `/v1beta/models/${REMOTE_MODEL}:generateContent?key=${GEMINI_API_KEY}`,
+            path: `/v1/models/${cleanModel}:generateContent?key=${apiKey}`,
             method: 'POST',
             headers: {
-                'Content-Type': 'application/json',
-                'Content-Length': Buffer.byteLength(data)
+                'Content-Type': 'application/json'
             }
         };
 
@@ -240,6 +251,8 @@ async function callRemoteBrain(prompt) {
                     const parsed = JSON.parse(body);
                     if (parsed.candidates && parsed.candidates[0].content.parts[0].text) {
                         resolve(parsed.candidates[0].content.parts[0].text);
+                    } else if (parsed.error) {
+                        reject(`Gemini API Error (${parsed.error.code}): ${parsed.error.message}`);
                     } else {
                         reject('Gemini API Error: ' + JSON.stringify(parsed));
                     }
@@ -342,8 +355,30 @@ function setupWss(wss) {
                         });
                     };
                     scanDir(rootDir);
-                    safeSend(ws, { type: 'CODEBASE_INDEX', files: fileMap });
-                } else if (request.type === 'START_TASK') {
+                    if (ws.readyState === ws.OPEN) {
+                        safeSend(ws, { type: 'CODEBASE_INDEX', files: fileMap });
+                    }
+                }
+                else if (request.type === 'UPDATE_AI_CONFIG') {
+                    if (request.geminiKey) {
+                        GEMINI_API_KEY = request.geminiKey.trim();
+                        console.log(`[ANTGR-BRIDGE] Gemini API Key updated.`);
+                    }
+                    if (request.remoteModel) {
+                        REMOTE_MODEL = request.remoteModel.trim();
+                        console.log(`[ANTGR-BRIDGE] Remote Model updated: ${REMOTE_MODEL}`);
+                    }
+                    if (request.ollamaUrl) {
+                        OLLAMA_URL = request.ollamaUrl.trim();
+                        console.log(`[ANTGR-BRIDGE] Ollama URL updated: ${OLLAMA_URL}`);
+                    }
+                    if (request.localModel) {
+                        DEFAULT_MODEL = request.localModel.trim();
+                        console.log(`[ANTGR-BRIDGE] Local Model updated: ${DEFAULT_MODEL}`);
+                    }
+                    safeSend(ws, { type: 'SYSTEM', msg: 'System AI Configuration updated successfully.' });
+                }
+                else if (request.type === 'START_TASK') {
                     if (activeProcess) {
                         safeSend(ws, { type: 'SYSTEM', msg: 'Task already running.' });
                         return;

@@ -136,6 +136,19 @@ export class BridgeClient {
             this.socket.send(JSON.stringify({ type: 'SCAN_CODEBASE' }));
         }
     }
+
+    syncRemoteConfig() {
+        if (this.socket && this.socket.readyState === WebSocket.OPEN) {
+            this.socket.send(JSON.stringify({
+                type: 'UPDATE_AI_CONFIG',
+                geminiKey: State.geminiKey,
+                remoteModel: State.remoteModel,
+                ollamaUrl: State.ollamaUrl,
+                localModel: State.localModel
+            }));
+            Bus.emit('log', { msg: 'Bridge: Synced AI configuration (Remote & Local).', type: 'system' });
+        }
+    }
 }
 
 export const Bridge = new BridgeClient('ws://localhost:3001');

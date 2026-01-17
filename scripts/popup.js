@@ -99,9 +99,26 @@ async function init() {
             const authInput = document.getElementById('auth-token-input');
             if (authInput) authInput.value = State.authKey || "";
 
+            const geminiKeyInput = document.getElementById('gemini-key-input');
+            if (geminiKeyInput) geminiKeyInput.value = State.geminiKey || "";
+
+            const geminiModelInput = document.getElementById('gemini-model-input');
+            if (geminiModelInput) geminiModelInput.value = State.remoteModel || "gemini-2.5-flash";
+
+            const ollamaUrlInput = document.getElementById('ollama-url-input');
+            if (ollamaUrlInput) ollamaUrlInput.value = State.ollamaUrl || "http://localhost:11434/api/generate";
+
+            const localModelInput = document.getElementById('local-model-input');
+            if (localModelInput) localModelInput.value = State.localModel || "llama3:latest";
+
             updateUI();
             renderPlugins();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
+
+            // Sync current config to Bridge once connected
+            if (State.geminiKey || State.remoteModel || State.ollamaUrl || State.localModel) {
+                setTimeout(() => Bridge.syncRemoteConfig(), 3000);
+            }
         } else {
             renderPlugins();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
@@ -118,8 +135,50 @@ async function init() {
         authInput.addEventListener('change', (e) => {
             State.authKey = e.target.value;
             Bus.emit('log', { msg: 'Security: Token updated. Re-handshaking with Bridge...', type: 'warning' });
+            saveState(); // Save state immediately
             Bridge.connect();
             setTimeout(() => Bridge.scanCodebase(), 1000);
+        });
+    }
+
+    // Gemini Config Listeners
+    const geminiKeyInput = document.getElementById('gemini-key-input');
+    if (geminiKeyInput) {
+        geminiKeyInput.addEventListener('change', (e) => {
+            State.geminiKey = e.target.value;
+            Bus.emit('log', { msg: 'Config: Gemini Key updated.', type: 'system' });
+            saveState();
+            Bridge.syncRemoteConfig();
+        });
+    }
+
+    const geminiModelInput = document.getElementById('gemini-model-input');
+    if (geminiModelInput) {
+        geminiModelInput.addEventListener('change', (e) => {
+            State.remoteModel = e.target.value;
+            Bus.emit('log', { msg: `Config: Remote model set to ${e.target.value}`, type: 'system' });
+            saveState();
+            Bridge.syncRemoteConfig();
+        });
+    }
+
+    const ollamaUrlInput = document.getElementById('ollama-url-input');
+    if (ollamaUrlInput) {
+        ollamaUrlInput.addEventListener('change', (e) => {
+            State.ollamaUrl = e.target.value;
+            Bus.emit('log', { msg: 'Config: Ollama URL updated.', type: 'system' });
+            saveState();
+            Bridge.syncRemoteConfig();
+        });
+    }
+
+    const localModelInput = document.getElementById('local-model-input');
+    if (localModelInput) {
+        localModelInput.addEventListener('change', (e) => {
+            State.localModel = e.target.value;
+            Bus.emit('log', { msg: `Config: Local model set to ${e.target.value}`, type: 'system' });
+            saveState();
+            Bridge.syncRemoteConfig();
         });
     }
 

@@ -14,6 +14,10 @@ export const State = {
     isTaskRunning: false,
     devopsLogs: [],
     authKey: "antgr_secret_v1_99",
+    geminiKey: "",
+    remoteModel: "gemini-2.5-flash",
+    ollamaUrl: "http://localhost:11434/api/generate",
+    localModel: "llama3:latest",
     codebaseIndex: {},
     lastConnected: null,
     connectionAttempts: 0

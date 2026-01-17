@@ -159,7 +159,57 @@
 
           <div class="security-settings"
             style="margin-top: 20px; border-top: 1px solid var(--border-glass); padding-top: 20px;">
-            <h2 style="font-size: 0.8rem; color: var(--neon-violet);">Mission Security</h2>
+            <h2 style="font-size: 0.8rem; color: var(--neon-violet); margin-bottom: 15px;">Remote AI Configuration</h2>
+
+            <div class="plugin-card"
+              style="flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 15px;">
+              <div class="plugin-info">
+                <span class="plugin-name">GEMINI API KEY</span>
+                <span class="plugin-desc">Your Google AI Studio key</span>
+              </div>
+              <input type="password" id="gemini-key-input"
+                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--neon-cyan); padding: 8px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.7rem;"
+                placeholder="AIzaSy...">
+            </div>
+
+            <div class="plugin-card"
+              style="flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 20px;">
+              <div class="plugin-info">
+                <span class="plugin-name">REMOTE MODEL</span>
+                <span class="plugin-desc">e.g. gemini-1.5-pro, gemini-2.5-flash</span>
+              </div>
+              <input type="text" id="gemini-model-input"
+                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--neon-cyan); padding: 8px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.7rem;"
+                placeholder="gemini-1.5-pro">
+            </div>
+
+            <h2 style="font-size: 0.8rem; color: var(--neon-cyan); margin-bottom: 15px;">Local AI Configuration (Ollama)
+            </h2>
+
+            <div class="plugin-card"
+              style="flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 15px;">
+              <div class="plugin-info">
+                <span class="plugin-name">OLLAMA URL</span>
+                <span class="plugin-desc">Default: http://localhost:11434/api/generate</span>
+              </div>
+              <input type="text" id="ollama-url-input"
+                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--neon-cyan); padding: 8px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.7rem;"
+                placeholder="http://localhost:11434/api/generate">
+            </div>
+
+            <div class="plugin-card"
+              style="flex-direction: column; align-items: flex-start; gap: 10px; margin-bottom: 15px;">
+              <div class="plugin-info">
+                <span class="plugin-name">LOCAL MODEL</span>
+                <span class="plugin-desc">e.g. llama3, phi3, mistral</span>
+              </div>
+              <input type="text" id="local-model-input"
+                style="width: 100%; background: rgba(255,255,255,0.05); border: 1px solid var(--border-glass); color: var(--neon-cyan); padding: 8px; border-radius: 4px; font-family: 'Fira Code', monospace; font-size: 0.7rem;"
+                placeholder="llama3:latest">
+            </div>
+
+            <h2 style="font-size: 0.8rem; color: var(--neon-violet); margin-top: 20px; margin-bottom: 15px;">Mission
+              Security</h2>
             <div class="plugin-card" style="flex-direction: column; align-items: flex-start; gap: 10px;">
               <div class="plugin-info">
                 <span class="plugin-name">BRIDGE AUTH TOKEN</span>
