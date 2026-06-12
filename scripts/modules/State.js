@@ -21,5 +21,7 @@ export const State = {
     allowRemoteCode: false,
     codebaseIndex: {},
     lastConnected: null,
-    connectionAttempts: 0
+    connectionAttempts: 0,
+    boardFindings: [],
+    boardHistory: []
 };

@@ -1,6 +1,7 @@
 import { Bus } from './Bus.js';
 import { State } from './State.js';
 import { Bridge } from './Bridge.js';
+import { BoardMemory } from './BoardMemory.js';
 
 /**
  * UXExpert: Pro-active design and integration advisor.
@@ -60,6 +61,9 @@ export class UXExpert {
             });
         });
         this.container.scrollTop = this.container.scrollHeight;
+
+        // Persist into board memory for session reporting/history.
+        BoardMemory.record('UX', rec.label, source);
     }
 
     getIcon(type) {
@@ -121,6 +125,9 @@ export class PredictiveInsightAgent {
 
         this.container.prepend(div);
         if (this.container.children.length > 5) this.container.lastElementChild.remove();
+
+        // Persist into board memory for session reporting/history.
+        BoardMemory.record('PREDICTIVE', message, source);
     }
 
     updateUI() {
@@ -187,6 +194,9 @@ export class CTOAuditor {
 
         // Allow up to 4 alerts to show consensus from both brains
         if (this.container.children.length > 4) this.container.lastElementChild.remove();
+
+        // Persist into board memory for session reporting/history.
+        BoardMemory.record('CTO', message, source);
     }
 
     async askAI(context) {
@@ -285,6 +295,9 @@ export class BoardAgent {
 
         // Keep the panel focused on the latest consensus
         if (this.panel.children.length > 4) this.panel.lastElementChild.remove();
+
+        // Persist into board memory for session reporting/history.
+        BoardMemory.record(this.role.title, message, source);
     }
 
     async askAI(context) {

@@ -909,6 +909,34 @@ input:checked+.slider:before {
   }
 }
 
+/* ===== Advisory Board · Toolbar & Memory Badge ===== */
+/* Toolbar sits above the board grid: export action on the left,
+   persisted-session memory pill on the right. */
+.board-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.board-toolbar .install-btn {
+  margin-right: 10px;
+}
+
+/* Small Orbitron neon-cyan pill, consistent with .badge / .bridge-badge. */
+.board-memory-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(0, 242, 255, 0.1);
+  color: var(--neon-cyan);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 242, 255, 0.2);
+  white-space: nowrap;
+}
+
 /* ===== Touch ergonomics ===== */
 /* Bump board/action button hit areas only on coarse pointers (touch),
    so mouse users keep the compact desktop look while touch users get

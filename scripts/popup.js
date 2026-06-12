@@ -3,6 +3,8 @@ import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
 import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
 import { CTOAuditor, UXExpert, PredictiveInsightAgent, BoardAgent, BOARD_ROLES } from './modules/Agents.js';
+import { BoardMemory } from './modules/BoardMemory.js';
+import { Report } from './modules/Report.js';
 
 // --- Initialization ---
 
@@ -22,6 +24,28 @@ async function init() {
 
     // Activate the Advisory Board: build a panel per role and wire its agent.
     initAdvisoryBoard();
+
+    // Wire the board report export button.
+    const exportBoardBtn = document.getElementById('export-board-btn');
+    if (exportBoardBtn) {
+        exportBoardBtn.addEventListener('click', () => {
+            const findings = BoardMemory.getCurrent();
+            Report.export(findings, {
+                date: new Date().toISOString().slice(0, 10),
+                metrics: {
+                    tokens: State.tokens,
+                    cost: State.cost,
+                    securityScore: State.securityScore,
+                    uxScore: State.uxScore
+                }
+            });
+            if (!findings.length) {
+                Bus.emit('log', { msg: 'Board: No findings yet — exported empty report.', type: 'warning' });
+            } else {
+                Bus.emit('log', { msg: 'Board: Report exported.', type: 'success' });
+            }
+        });
+    }
 
     // Initialize Sparklines
     tokenSpark = new Sparkline('tokens-sparkline', '#00f2ff');
@@ -120,6 +144,7 @@ async function init() {
 
             updateUI();
             renderPlugins();
+            updateBoardMemoryCount();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
 
             // Sync current config to Bridge once connected
@@ -128,6 +153,7 @@ async function init() {
             }
         } else {
             renderPlugins();
+            updateBoardMemoryCount();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
         }
 
@@ -293,6 +319,7 @@ async function runWorkspaceSync() {
 
     // Wake the full Advisory Board for this mission cycle.
     Object.values(Board).forEach(agent => agent.reset());
+    BoardMemory.clearCurrent();
     const boardStatus = document.getElementById('board-status');
     if (boardStatus) boardStatus.textContent = 'DELIBERATING...';
 
@@ -377,6 +404,16 @@ async function runWorkspaceSync() {
     Bus.emit('cto_audit_stop');
     const boardStatusEnd = document.getElementById('board-status');
     if (boardStatusEnd) boardStatusEnd.textContent = 'BOARD READY';
+
+    // Archive this session's findings into capped history and refresh the badge.
+    BoardMemory.snapshotSession({
+        tokens: State.tokens,
+        cost: State.cost,
+        securityScore: State.securityScore,
+        uxScore: State.uxScore
+    });
+    updateBoardMemoryCount();
+
     Bus.emit('log', { msg: 'Sync completed. All systems nominal.', type: 'success' });
 
     State.isScanning = false;
@@ -520,6 +557,12 @@ function switchTab(tabName) {
 function autoExpandNode(type) {
     const header = document.querySelector(`.node-header.${type}`);
     if (header) header.parentElement.classList.add('expanded');
+}
+
+// Reflect the count of persisted board sessions in the memory badge.
+function updateBoardMemoryCount() {
+    const badge = document.getElementById('board-memory-count');
+    if (badge) badge.textContent = `MEM: ${BoardMemory.getHistory().length}`;
 }
 
 function saveState() {
