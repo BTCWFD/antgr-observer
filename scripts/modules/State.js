@@ -13,7 +13,7 @@ export const State = {
     recommendations: [],
     isTaskRunning: false,
     devopsLogs: [],
-    authKey: "antgr_secret_v1_99",
+    authKey: "",
     geminiKey: "",
     remoteModel: "gemini-2.5-flash",
     ollamaUrl: "http://localhost:11434/api/generate",

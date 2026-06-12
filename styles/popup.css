@@ -1026,3 +1026,17 @@ input:checked+.slider:before {
   font-style: italic;
   opacity: 0.7;
 }
+
+/* ===== Mission Security · Bridge Token Warning ===== */
+/* Amber danger pill shown under the auth token input when the token is empty
+   or still the insecure legacy default. Toggled via inline display by popup.js. */
+.token-warning {
+  background: rgba(255, 170, 0, 0.1);
+  border: 1px solid #ffaa00;
+  color: #ffaa00;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-top: 8px;
+}
+

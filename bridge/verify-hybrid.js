@@ -1,6 +1,9 @@
 const WebSocket = require('ws');
 
-const url = 'ws://localhost:3001?token=antgr_secret_v1_99';
+require('dotenv').config();
+const TOKEN = process.env.AUTH_TOKEN;
+if (!TOKEN) { console.error('[ERROR] AUTH_TOKEN missing in bridge/.env'); process.exit(1); }
+const url = `ws://localhost:3001?token=${TOKEN}`;
 const ws = new WebSocket(url);
 
 ws.on('open', () => {

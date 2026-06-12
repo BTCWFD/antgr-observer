@@ -26,6 +26,21 @@ if (!AUTH_TOKEN) {
     process.exit(1);
 }
 
+// --- SECURITY WARNING: Legacy default token (non-fatal) ---
+// The string below was shipped historically as a hardcoded default secret and
+// is publicly known. We do NOT exit (a deliberately-configured dev may still
+// use it), but we loudly warn the operator to rotate it.
+if (AUTH_TOKEN === 'antgr_secret_v1_99') {
+    console.warn('\n=====================================================================');
+    console.warn('[SECURITY WARNING] Bridge is using the PUBLICLY-KNOWN default token!');
+    console.warn('  AUTH_TOKEN is set to the legacy default "antgr_secret_v1_99".');
+    console.warn('  Any local process knows this value and can handshake with the Bridge.');
+    console.warn('  ACTION REQUIRED: Set a unique, strong AUTH_TOKEN in bridge/.env');
+    console.warn('  and match it in the extension (Plugins > Mission Security,');
+    console.warn('  or use the GENERATE STRONG TOKEN button). See bridge/.env.example.');
+    console.warn('=====================================================================\n');
+}
+
 // --- SECURITY HARDENING: BanManager (Mini-Fail2Ban) ---
 class BanManager {
     constructor() {

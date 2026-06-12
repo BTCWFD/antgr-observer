@@ -64,8 +64,10 @@ The system features a **Surgical ES6 Modular Architecture**:
 
 ### 3. Manual Bridge Setup
 1.  Navigate to `/bridge`.
-2.  Create a `.env` file (see `bridge/server.js` for required keys).
+2.  Copy `bridge/.env.example` to `bridge/.env` and fill in the values.
 3.  Run `antigravity-bridge.exe` or `npm start`.
+
+> **Security: AUTH_TOKEN.** The `AUTH_TOKEN` in `bridge/.env` must be a **unique, strong secret** — no default is shipped anymore, and the legacy `antgr_secret_v1_99` value is publicly known (the Bridge will warn loudly if it detects it). It **must match** the token configured in the extension (Plugins > Mission Security, or the **GENERATE STRONG TOKEN** button). See [`bridge/.env.example`](bridge/.env.example) for the full template.
 
 ## Technical Specifications
 

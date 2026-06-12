@@ -10,6 +10,10 @@ import { HistoryView } from './modules/HistoryView.js';
 
 // --- Initialization ---
 
+// The legacy default secret that used to ship in State.js. We no longer ship a
+// usable default; warn the user if their stored token still matches it.
+const LEGACY_DEFAULT_TOKEN = 'antgr_secret_v1_99';
+
 let Logger, Terminal, Auditor, UX, Insights, DevOpsTerminal;
 let History;
 let tokenSpark, costSpark, securitySpark;
@@ -152,6 +156,7 @@ async function init() {
             updateUI();
             renderPlugins();
             updateBoardMemoryCount();
+            refreshTokenWarning();
             History.render();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
 
@@ -162,6 +167,7 @@ async function init() {
         } else {
             renderPlugins();
             updateBoardMemoryCount();
+            refreshTokenWarning();
             History.render();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
         }
@@ -180,6 +186,29 @@ async function init() {
             saveState(); // Save state immediately
             Bridge.connect();
             setTimeout(() => Bridge.scanCodebase(), 1000);
+            refreshTokenWarning();
+        });
+    }
+
+    // Strong token generator: produce a unique high-entropy token, store it,
+    // and re-handshake with the Bridge. The user must mirror it into
+    // bridge/.env (AUTH_TOKEN=...) for the Bridge to accept the connection.
+    const generateTokenBtn = document.getElementById('generate-token-btn');
+    if (generateTokenBtn) {
+        generateTokenBtn.addEventListener('click', () => {
+            const bytes = new Uint8Array(24);
+            crypto.getRandomValues(bytes);
+            const token = Array.from(bytes, (b) => b.toString(16).padStart(2, '0')).join('');
+
+            const input = document.getElementById('auth-token-input');
+            if (input) input.value = token;
+            State.authKey = token;
+            saveState();
+            Bridge.connect();
+            setTimeout(() => Bridge.scanCodebase(), 1000);
+            refreshTokenWarning();
+            // Never log the token value itself.
+            Bus.emit('log', { msg: 'Security: Strong token generated. Copy it into bridge/.env (AUTH_TOKEN=...) so the Bridge accepts it.', type: 'warning' });
         });
     }
 
@@ -570,6 +599,25 @@ function switchTab(tabName) {
 function autoExpandNode(type) {
     const header = document.querySelector(`.node-header.${type}`);
     if (header) header.parentElement.classList.add('expanded');
+}
+
+// Show a security warning when the Bridge token is missing or still the legacy
+// default secret; hide it once the user sets a unique token. Uses textContent
+// only (never innerHTML) since the token is user-controlled.
+function refreshTokenWarning() {
+    const warning = document.getElementById('token-warning');
+    if (!warning) return;
+
+    if (!State.authKey) {
+        warning.textContent = 'No Bridge token set — the connection is disabled until you set a unique token.';
+        warning.style.display = 'block';
+    } else if (State.authKey === LEGACY_DEFAULT_TOKEN) {
+        warning.textContent = 'Insecure default token in use — generate or set a unique token now.';
+        warning.style.display = 'block';
+    } else {
+        warning.textContent = '';
+        warning.style.display = 'none';
+    }
 }
 
 // Reflect the count of persisted board sessions in the memory badge.
