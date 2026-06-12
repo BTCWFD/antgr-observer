@@ -5,10 +5,13 @@ import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
 import { CTOAuditor, UXExpert, PredictiveInsightAgent, BoardAgent, BOARD_ROLES } from './modules/Agents.js';
 import { BoardMemory } from './modules/BoardMemory.js';
 import { Report } from './modules/Report.js';
+import { Consensus } from './modules/Consensus.js';
+import { HistoryView } from './modules/HistoryView.js';
 
 // --- Initialization ---
 
 let Logger, Terminal, Auditor, UX, Insights, DevOpsTerminal;
+let History;
 let tokenSpark, costSpark, securitySpark;
 const Board = {}; // key -> BoardAgent instance
 
@@ -24,6 +27,10 @@ async function init() {
 
     // Activate the Advisory Board: build a panel per role and wire its agent.
     initAdvisoryBoard();
+
+    // Render persisted Board Memory session history.
+    History = new HistoryView('board-history');
+    History.render();
 
     // Wire the board report export button.
     const exportBoardBtn = document.getElementById('export-board-btn');
@@ -145,6 +152,7 @@ async function init() {
             updateUI();
             renderPlugins();
             updateBoardMemoryCount();
+            History.render();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
 
             // Sync current config to Bridge once connected
@@ -154,6 +162,7 @@ async function init() {
         } else {
             renderPlugins();
             updateBoardMemoryCount();
+            History.render();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
         }
 
@@ -272,6 +281,7 @@ function handleAIResponse(data) {
         document.getElementById('advisory-board-node')?.classList.add('expanded');
         const statusEl = document.getElementById('board-status');
         if (statusEl) statusEl.textContent = 'CONSENSUS LIVE';
+        updateConsensus();
     }
 }
 
@@ -320,6 +330,7 @@ async function runWorkspaceSync() {
     // Wake the full Advisory Board for this mission cycle.
     Object.values(Board).forEach(agent => agent.reset());
     BoardMemory.clearCurrent();
+    updateConsensus();
     const boardStatus = document.getElementById('board-status');
     if (boardStatus) boardStatus.textContent = 'DELIBERATING...';
 
@@ -413,6 +424,8 @@ async function runWorkspaceSync() {
         uxScore: State.uxScore
     });
     updateBoardMemoryCount();
+    History.render();
+    updateConsensus();
 
     Bus.emit('log', { msg: 'Sync completed. All systems nominal.', type: 'success' });
 
@@ -563,6 +576,20 @@ function autoExpandNode(type) {
 function updateBoardMemoryCount() {
     const badge = document.getElementById('board-memory-count');
     if (badge) badge.textContent = `MEM: ${BoardMemory.getHistory().length}`;
+}
+
+// Recompute cross-role agreement over the current findings and reflect it in
+// the consensus badge. Shows an em-dash when there are no current findings.
+function updateConsensus() {
+    const badge = document.getElementById('board-consensus');
+    if (!badge) return;
+    const findings = BoardMemory.getCurrent();
+    if (!findings || !findings.length) {
+        badge.textContent = 'CONSENSUS: —';
+        return;
+    }
+    const c = Consensus.compute(findings);
+    badge.textContent = `CONSENSUS: ${c.score}%`;
 }
 
 function saveState() {

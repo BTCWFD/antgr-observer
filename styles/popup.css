@@ -950,3 +950,79 @@ input:checked+.slider:before {
     padding: 10px;
   }
 }
+
+/* ===== Advisory Board · Consensus Badge & Session History ===== */
+/* Consensus pill: same neon-cyan look as .board-memory-badge, reporting
+   live cross-role agreement above the board grid. */
+.board-consensus-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  padding: 4px 10px;
+  border-radius: 4px;
+  background: rgba(188, 0, 255, 0.1);
+  color: var(--neon-violet);
+  border: 1px solid var(--neon-violet);
+  box-shadow: 0 0 10px rgba(188, 0, 255, 0.2);
+  white-space: nowrap;
+  margin-left: 8px;
+}
+
+/* Board Memory history: a vertical stack of persisted-session cards. */
+.board-history {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* Glass card row per session, with a neon-cyan accent edge like .board-cell. */
+.history-session {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--border-glass);
+  border-left: 2px solid var(--neon-cyan);
+  border-radius: 8px;
+  padding: 10px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Small dim mono text for the date / count / metric lines. */
+.history-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  color: var(--text-dim);
+}
+
+/* Compact export action matching the dashed .install-btn vibe but inline. */
+.history-export-btn {
+  align-self: flex-start;
+  background: transparent;
+  border: 1px dashed var(--border-glass);
+  color: var(--text-dim);
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.65rem;
+  letter-spacing: 1px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.history-export-btn:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0, 242, 255, 0.05);
+}
+
+/* Empty-state placeholder, dim and italic like other placeholders. */
+.history-placeholder {
+  font-size: 0.7rem;
+  color: var(--text-dim);
+  font-style: italic;
+  opacity: 0.7;
+}

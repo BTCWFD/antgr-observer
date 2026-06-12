@@ -116,10 +116,20 @@
             <div class="board-toolbar">
               <button id="export-board-btn" class="install-btn">EXPORT BOARD REPORT</button>
               <span class="board-memory-badge" id="board-memory-count" title="Saved board sessions">MEM: 0</span>
+              <span class="board-consensus-badge" id="board-consensus" title="Cross-role agreement">CONSENSUS: —</span>
             </div>
             <div id="advisory-board" class="advisory-board">
               <!-- Board role panels generated dynamically by Agents.js / popup.js -->
             </div>
+          </div>
+        </div>
+
+        <div class="mission-node">
+          <div class="node-header">
+            <div class="node-title">Board Memory · Session History</div>
+          </div>
+          <div class="node-content">
+            <div id="board-history" class="board-history"></div>
           </div>
         </div>
 
