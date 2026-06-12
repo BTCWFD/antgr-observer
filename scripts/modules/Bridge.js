@@ -104,12 +104,17 @@ export class BridgeClient {
         if (this.heartbeatTimer) clearInterval(this.heartbeatTimer);
     }
 
-    sendAIRequest(agent, prompt) {
+    // includesCodebase: explicit, authoritative privacy signal. Any caller that
+    // embeds source code / codebase context into the prompt MUST pass true so the
+    // server can block remote (Gemini) failover unless the user opted in. This
+    // replaces reliance on the server's content-sniffing heuristic.
+    sendAIRequest(agent, prompt, { includesCodebase = false } = {}) {
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify({
                 type: 'LLM_PROMPT',
                 agent: agent,
-                prompt: prompt
+                prompt: prompt,
+                includesCodebase: includesCodebase === true
             }));
             return true;
         }
