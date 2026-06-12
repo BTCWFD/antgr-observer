@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "Antigravity Observer",
-  "version": "1.0",
+  "version": "1.1.0",
   "description": "Monitorea y analiza el progreso de tus creaciones en local.",
   "permissions": [
     "notifications",
