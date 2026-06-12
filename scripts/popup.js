@@ -128,6 +128,19 @@ async function init() {
         btn.addEventListener('click', () => switchTab(btn.getAttribute('data-tab')));
     });
 
+    // First-run onboarding banner wiring
+    const onboardDismiss = document.getElementById('onboarding-dismiss-btn');
+    if (onboardDismiss) onboardDismiss.addEventListener('click', dismissOnboarding);
+    const onboardGotIt = document.getElementById('onboarding-got-it-btn');
+    if (onboardGotIt) onboardGotIt.addEventListener('click', dismissOnboarding);
+    const onboardConfig = document.getElementById('onboarding-config-btn');
+    if (onboardConfig) {
+        onboardConfig.addEventListener('click', () => {
+            switchTab('plugins');
+            dismissOnboarding();
+        });
+    }
+
     // Persistent State Recovery
     chrome.storage.local.get(['observerState'], (result) => {
         if (result.observerState) {
@@ -158,6 +171,7 @@ async function init() {
             updateBoardMemoryCount();
             refreshTokenWarning();
             History.render();
+            maybeShowOnboarding();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
 
             // Sync current config to Bridge once connected
@@ -169,6 +183,7 @@ async function init() {
             updateBoardMemoryCount();
             refreshTokenWarning();
             History.render();
+            maybeShowOnboarding();
             Bus.emit('log', { msg: 'System core initialized. Heartbeat stable.', type: 'system' });
         }
 
@@ -599,6 +614,19 @@ function switchTab(tabName) {
 function autoExpandNode(type) {
     const header = document.querySelector(`.node-header.${type}`);
     if (header) header.parentElement.classList.add('expanded');
+}
+
+// Show the first-run setup banner until the user dismisses it (persisted).
+function maybeShowOnboarding() {
+    const banner = document.getElementById('onboarding-banner');
+    if (banner) banner.style.display = State.onboarded ? 'none' : 'block';
+}
+
+function dismissOnboarding() {
+    State.onboarded = true;
+    saveState();
+    const banner = document.getElementById('onboarding-banner');
+    if (banner) banner.style.display = 'none';
 }
 
 // Show a security warning when the Bridge token is missing or still the legacy

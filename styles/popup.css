@@ -1027,6 +1027,79 @@ input:checked+.slider:before {
   opacity: 0.7;
 }
 
+/* ===== First-run Onboarding Banner ===== */
+/* Shown once on first launch (until dismissed); guides token + privacy setup. */
+.onboarding-banner {
+  background: linear-gradient(135deg, rgba(0, 242, 255, 0.08), rgba(188, 0, 255, 0.08));
+  border: 1px solid var(--neon-cyan);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+  box-shadow: 0 0 18px rgba(0, 242, 255, 0.15);
+  animation: fadeIn 0.4s ease-out;
+}
+
+.onboarding-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.onboarding-title {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 0.8rem;
+  letter-spacing: 1.5px;
+  color: var(--neon-cyan);
+  text-shadow: 0 0 10px rgba(0, 242, 255, 0.3);
+}
+
+.onboarding-close {
+  background: transparent;
+  border: none;
+  color: var(--text-dim);
+  cursor: pointer;
+  font-size: 0.85rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+.onboarding-close:hover {
+  color: var(--neon-violet);
+  background: rgba(188, 0, 255, 0.1);
+}
+
+.onboarding-steps {
+  margin: 0 0 12px 18px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--text-main);
+}
+
+.onboarding-steps code {
+  font-family: 'Fira Code', monospace;
+  font-size: 0.68rem;
+  color: var(--neon-cyan);
+  background: rgba(0, 242, 255, 0.08);
+  padding: 1px 4px;
+  border-radius: 3px;
+}
+
+.onboarding-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.onboarding-actions .install-btn {
+  flex: 1;
+}
+
+
 /* ===== Mission Security · Bridge Token Warning ===== */
 /* Amber danger pill shown under the auth token input when the token is empty
    or still the insecure legacy default. Toggled via inline display by popup.js. */

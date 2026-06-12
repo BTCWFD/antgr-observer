@@ -28,6 +28,22 @@
 
     <div class="views-wrapper">
       <div id="main-view" class="view active">
+        <div id="onboarding-banner" class="onboarding-banner" style="display: none;">
+          <div class="onboarding-header">
+            <span class="onboarding-title">⚡ MISSION SETUP</span>
+            <button id="onboarding-dismiss-btn" class="onboarding-close" title="Dismiss">✕</button>
+          </div>
+          <ol class="onboarding-steps">
+            <li>Set a unique <strong>Bridge token</strong> and copy it into <code>bridge/.env</code>.</li>
+            <li>Source code stays <strong>local</strong> by default — enable the remote brain only via the privacy toggle.</li>
+            <li>Hit <strong>SYNC WORKSPACE</strong> to wake the Advisory Board.</li>
+          </ol>
+          <div class="onboarding-actions">
+            <button id="onboarding-config-btn" class="install-btn">OPEN SECURITY SETTINGS</button>
+            <button id="onboarding-got-it-btn" class="install-btn">GOT IT</button>
+          </div>
+        </div>
+
         <section class="active-tasks">
           <h2>ACTIVE MISSIONS</h2>
           <div id="task-list">

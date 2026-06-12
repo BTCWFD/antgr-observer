@@ -23,5 +23,6 @@ export const State = {
     lastConnected: null,
     connectionAttempts: 0,
     boardFindings: [],
-    boardHistory: []
+    boardHistory: [],
+    onboarded: false
 };
