@@ -31,16 +31,20 @@ export class UXExpert {
         card.innerHTML = `
             <div class="ux-rec-content">
                 <div class="ux-rec-top">
-                    <span class="ux-rec-source">[${source}]</span>
+                    <span class="ux-rec-source"></span>
                     <span class="ux-rec-icon">${this.getIcon(rec.type)}</span>
                 </div>
-                <span class="ux-rec-label">${rec.label}</span>
+                <span class="ux-rec-label"></span>
             </div>
             <div class="ux-actions">
-                <button class="ux-action-btn" data-id="${rec.id}">DEPLOY</button>
+                <button class="ux-action-btn">DEPLOY</button>
                 <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
             </div>
         `;
+        card.querySelector('.ux-rec-source').textContent = `[${source}]`;
+        card.querySelector('.ux-rec-label').textContent = rec.label;
+        // data-id set via attribute API (never interpolated into innerHTML) — XSS-safe.
+        card.querySelector('.ux-action-btn').setAttribute('data-id', rec.id);
 
         if (this.container.querySelector('.ux-placeholder')) {
             this.container.innerHTML = '';
@@ -108,7 +112,8 @@ export class PredictiveInsightAgent {
         if (!this.container) return;
         const div = document.createElement('div');
         div.className = `insight-item source-${source.toLowerCase()}`;
-        div.innerHTML = `<span class="insight-label">[PREDICTIVE]</span> ${message}`;
+        div.innerHTML = `<span class="insight-label">[PREDICTIVE]</span> `;
+        div.appendChild(document.createTextNode(message));
 
         if (this.container.querySelector('.insight-placeholder')) {
             this.container.innerHTML = '';
@@ -161,12 +166,15 @@ export class CTOAuditor {
         alert.className = `cto-alert source-${source.toLowerCase()}`;
         alert.innerHTML = `
             <div class="cto-alert-main">
-                <span class="cto-alert-source">[${source}]</span>
-                <span class="cto-alert-type">[CTO: ${type}]</span>
-                <span class="cto-alert-msg">${message}</span>
+                <span class="cto-alert-source"></span>
+                <span class="cto-alert-type"></span>
+                <span class="cto-alert-msg"></span>
             </div>
             <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
         `;
+        alert.querySelector('.cto-alert-source').textContent = `[${source}]`;
+        alert.querySelector('.cto-alert-type').textContent = `[CTO: ${type}]`;
+        alert.querySelector('.cto-alert-msg').textContent = message;
         this.container.prepend(alert);
 
         alert.querySelector('.github-small').addEventListener('click', () => {
@@ -252,13 +260,15 @@ export class BoardAgent {
         card.innerHTML = `
             <div class="board-card-main">
                 <div class="board-card-top">
-                    <span class="board-source">[${source}]</span>
+                    <span class="board-source"></span>
                     <span class="board-role">${this.role.icon} ${this.role.key}</span>
                 </div>
-                <span class="board-msg">${message}</span>
+                <span class="board-msg"></span>
             </div>
             <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
         `;
+        card.querySelector('.board-source').textContent = `[${source}]`;
+        card.querySelector('.board-msg').textContent = message;
 
         if (this.panel.querySelector('.board-placeholder')) {
             this.panel.innerHTML = '';

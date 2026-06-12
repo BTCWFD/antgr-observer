@@ -1,0 +1,46 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Syntax-check JavaScript files
+        run: |
+          set -e
+          files=$(find scripts bridge -type f -name '*.js' 2>/dev/null || true)
+          if [ -z "$files" ]; then
+            echo "No .js files found under scripts/ or bridge/, skipping."
+          else
+            for f in $files; do
+              echo "Checking $f"
+              node --check "$f"
+            done
+          fi
+
+      - name: Install bridge dependencies
+        working-directory: bridge
+        run: npm ci || npm install
+
+      - name: Run bridge tests if present
+        run: |
+          if [ -f bridge/package.json ] && node -e "process.exit(require('./bridge/package.json').scripts && require('./bridge/package.json').scripts.test ? 0 : 1)"; then
+            npm test --prefix bridge
+          else
+            echo "No test script in bridge/package.json, skipping."
+          fi

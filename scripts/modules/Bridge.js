@@ -41,6 +41,10 @@ export class BridgeClient {
                 this.reconnectInterval = 2000; // Reset interval
                 Bus.emit('log', { msg: 'Bridge Status: [PROTECTED CONNECTION ESTABLISHED]', type: 'success' });
                 Bus.emit('bridge_status', 'ONLINE');
+                // Re-push AI config (incl. allowRemoteCode privacy flag) on every
+                // (re)connect — the server resets per-connection state to defaults,
+                // so an enabled setting must survive automatic reconnects.
+                this.syncRemoteConfig();
                 this.scanCodebase();
                 this.startHeartbeat();
             };
@@ -144,7 +148,8 @@ export class BridgeClient {
                 geminiKey: State.geminiKey,
                 remoteModel: State.remoteModel,
                 ollamaUrl: State.ollamaUrl,
-                localModel: State.localModel
+                localModel: State.localModel,
+                allowRemoteCode: State.allowRemoteCode === true
             }));
             Bus.emit('log', { msg: 'Bridge: Synced AI configuration (Remote & Local).', type: 'system' });
         }

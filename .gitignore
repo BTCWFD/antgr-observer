@@ -4,3 +4,7 @@ node_modules/
 .env
 bridge/.env
 *.exe
+bridge/antigravity-bridge.exe
+
+# Local Claude Code session/settings
+.claude/

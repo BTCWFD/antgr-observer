@@ -115,6 +115,9 @@ async function init() {
             const localModelInput = document.getElementById('local-model-input');
             if (localModelInput) localModelInput.value = State.localModel || "llama3:latest";
 
+            const allowRemoteCodeToggle = document.getElementById('allow-remote-code-toggle');
+            if (allowRemoteCodeToggle) allowRemoteCodeToggle.checked = State.allowRemoteCode === true;
+
             updateUI();
             renderPlugins();
             Bus.emit('log', { msg: `System core recovered. Bridge Token: ${State.authKey.substring(0, 4)}***`, type: 'system' });
@@ -186,6 +189,21 @@ async function init() {
         });
     }
 
+    const allowRemoteCodeToggle = document.getElementById('allow-remote-code-toggle');
+    if (allowRemoteCodeToggle) {
+        allowRemoteCodeToggle.addEventListener('change', (e) => {
+            State.allowRemoteCode = e.target.checked;
+            Bus.emit('log', {
+                msg: e.target.checked
+                    ? 'Privacy: Remote code transmission ENABLED. Source code may be sent to Google Gemini.'
+                    : 'Privacy: Remote code transmission DISABLED. Codebase context stays local-only.',
+                type: e.target.checked ? 'warning' : 'system'
+            });
+            saveState();
+            Bridge.syncRemoteConfig();
+        });
+    }
+
     document.getElementById('refresh-btn').addEventListener('click', runWorkspaceSync);
 
     // Watch for external status updates
@@ -213,7 +231,9 @@ function handleAIResponse(data) {
     } else if (data.agent === 'UX') {
         try {
             const rec = JSON.parse(data.response);
-            UX.addRecommendation({ id: `ai-${Date.now()}`, source, ...rec });
+            // Spread the LLM JSON FIRST so locally-controlled id/source always win
+            // (prevents a crafted response from overriding the id used as a DOM attribute).
+            UX.addRecommendation({ ...rec, id: `ai-${Date.now()}`, source });
         } catch (e) {
             UX.addRecommendation({ id: `ai-${Date.now()}`, source, label: data.response, type: 'button' });
         }

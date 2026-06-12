@@ -18,6 +18,7 @@ export const State = {
     remoteModel: "gemini-2.5-flash",
     ollamaUrl: "http://localhost:11434/api/generate",
     localModel: "llama3:latest",
+    allowRemoteCode: false,
     codebaseIndex: {},
     lastConnected: null,
     connectionAttempts: 0

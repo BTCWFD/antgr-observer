@@ -268,11 +268,38 @@ async function callRemoteBrain(prompt) {
     });
 }
 
+// --- PRIVACY: Codebase Context Detection ---
+// Heuristic used to decide whether an LLM prompt embeds source code / codebase
+// context. When remote transmission of code is NOT explicitly authorized, such
+// prompts must never fail over to the Remote (Gemini) brain.
+function promptHasCodebaseContext(request) {
+    // 1. Explicit signal from the client (preferred when present).
+    if (request && (request.includesCodebase === true || request.codebaseContext === true)) {
+        return true;
+    }
+
+    const prompt = (request && typeof request.prompt === 'string') ? request.prompt : '';
+    if (!prompt) return false;
+
+    // 2. Fenced code blocks (```), a strong indicator of embedded source.
+    if (/```/.test(prompt)) return true;
+
+    // 3. Source file path references (e.g. scripts/modules/State.js, bridge/server.js).
+    if (/[\w./-]+\.(js|html|css|md|json|ts|jsx|tsx)\b/.test(prompt)) return true;
+
+    return false;
+}
+
 function setupWss(wss) {
     let activeProcess = null;
 
     wss.on('connection', (ws, req) => {
         const ip = req.socket.remoteAddress;
+
+        // Per-connection privacy flag. Defaults to OPT-OUT: remote transmission
+        // of codebase context is disabled until the client explicitly enables it
+        // via UPDATE_AI_CONFIG { allowRemoteCode: true }.
+        let allowRemoteCode = false;
 
         if (banManager.isBanned(ip)) {
             console.log(`[SECURITY] REJECTED: Banned IP ${ip} attempted connection.`);
@@ -329,6 +356,19 @@ function setupWss(wss) {
                             const response = await callOllama(request.prompt);
                             safeSend(ws, { type: 'LLM_RESPONSE', agent: request.agent, source: 'LOCAL', response: response });
                         } catch (err) {
+                            // PRIVACY GATE: If this prompt embeds codebase context and the
+                            // client has NOT opted in to remote code transmission, do NOT
+                            // fail over to the Remote brain. Return an informative note instead.
+                            if (!allowRemoteCode && promptHasCodebaseContext(request)) {
+                                console.warn(`[ANTGR-BRIDGE] Local Brain failed: ${err}. Remote failover BLOCKED (codebase context, allowRemoteCode=false).`);
+                                safeSend(ws, {
+                                    type: 'LLM_RESPONSE',
+                                    agent: request.agent,
+                                    source: 'LOCAL',
+                                    error: 'Local brain unavailable and remote code transmission is disabled. Enable "Allow Remote Code" to let codebase context reach Google Gemini, or start your local Ollama brain.'
+                                });
+                                return;
+                            }
                             console.warn(`[ANTGR-BRIDGE] Local Brain failed: ${err}. Failing over to Remote...`);
                             // Fallback to Remote
                             const response = await callRemoteBrain(request.prompt);
@@ -375,6 +415,10 @@ function setupWss(wss) {
                     if (request.localModel) {
                         DEFAULT_MODEL = request.localModel.trim();
                         console.log(`[ANTGR-BRIDGE] Local Model updated: ${DEFAULT_MODEL}`);
+                    }
+                    if (typeof request.allowRemoteCode === 'boolean') {
+                        allowRemoteCode = request.allowRemoteCode;
+                        console.log(`[ANTGR-BRIDGE] Privacy: Remote code transmission ${allowRemoteCode ? 'ENABLED' : 'DISABLED (local-only)'}.`);
                     }
                     safeSend(ws, { type: 'SYSTEM', msg: 'System AI Configuration updated successfully.' });
                 }
