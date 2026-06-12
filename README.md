@@ -18,6 +18,21 @@ Antigravity Observer is an enterprise-grade orchestration platform for real-time
 *   **CTO Live Audit**: Real-time technical assessment with one-click **GitHub Issue Generation**.
 *   **UX Mission Lab**: Pro-active design optimization with direct deployment capabilities.
 
+### 1.5. Advisory Board · Multi-Agent Council 🧑‍⚖️
+A full C-level / specialist council, each role a distinct AI persona auditing every mission cycle in parallel (Local + Remote consensus), each finding shippable as a GitHub Issue in one click:
+
+| Role | Focus |
+|------|-------|
+| 👔 **CEO** | Strategy, OKRs, competitive edge, ROI |
+| 📈 **BDM** | Partnerships, monetization, go-to-market, growth |
+| ⚖️ **Legal Senior** | GDPR/CCPA, OSS licensing, privacy, ToS |
+| ⚙️ **DevOps / SRE** | CI/CD, observability, reliability, scaling |
+| 📱 **Mobile** | Responsive, PWA, device performance, cross-platform parity |
+| 🧪 **QA** | Edge cases, test coverage, regressions, robustness |
+| 📊 **Data / Analytics** | Telemetry interpretation, KPIs, anomaly detection |
+
+*Plus the specialized **CTO** and **UX** agents above.* Roles are data-driven via `BOARD_ROLES` in [`scripts/modules/Agents.js`](scripts/modules/Agents.js) — add a new persona by appending one object.
+
 ### 2. DevOps Mission Console 📟
 *   **Live Process Streaming**: Real-time stdout/stderr capture from local tasks (npm, docker, etc.) directly into the extension.
 *   **Task Orchestration**: Start and terminate local dev processes via the Bridge's secure `spawn` engine.

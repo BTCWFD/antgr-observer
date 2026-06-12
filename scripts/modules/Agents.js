@@ -183,8 +183,105 @@ export class CTOAuditor {
 
     async askAI(context) {
         // Trigger LOCAL audit (Brain Bridge)
-        const localPrompt = `Como CTO de Antigravity, realiza una auditoría continua (DAST) y de cumplimiento ético sobre este evento: "${context}". 
+        const localPrompt = `Como CTO de Antigravity, realiza una auditoría continua (DAST) y de cumplimiento ético sobre este evento: "${context}".
         Busca vectores de inyección futuros y desviaciones éticas. Dame una recomendación técnica crítica y corta (máximo 15 palabras).`;
         Bridge.sendAIRequest('CTO', localPrompt);
+    }
+}
+
+/**
+ * BOARD_ROLES: The Antigravity Advisory Board roster.
+ * Each role is a distinct AI persona. The Bridge is role-agnostic, so the
+ * intelligence lives entirely in the `persona` prompt + dedicated panel.
+ * CTO and UX are handled by their specialized classes above; these complete
+ * the C-level / specialist board the mission needs.
+ */
+export const BOARD_ROLES = [
+    {
+        key: 'CEO', title: 'CEO · Strategy', icon: '👔', color: '#ffd700',
+        persona: 'el CEO de Antigravity. Evalúas visión estratégica, OKRs, ventaja competitiva, ROI y prioridades de la misión.'
+    },
+    {
+        key: 'BDM', title: 'BDM · Growth', icon: '📈', color: '#00ff88',
+        persona: 'un Business Development Manager. Detectas oportunidades de partnership, monetización, go-to-market y crecimiento.'
+    },
+    {
+        key: 'LEGAL', title: 'Legal Senior · Compliance', icon: '⚖️', color: '#ffaa00',
+        persona: 'un Abogado Senior de tecnología. Auditas cumplimiento GDPR/CCPA, licencias open-source, privacidad de datos y términos de uso.'
+    },
+    {
+        key: 'DEVOPS', title: 'DevOps · SRE', icon: '⚙️', color: '#00f2ff',
+        persona: 'un Ingeniero DevOps/SRE senior. Evalúas CI/CD, observabilidad, fiabilidad, escalado e infraestructura como código.'
+    },
+    {
+        key: 'MOBILE', title: 'Mobile · Cross-Platform', icon: '📱', color: '#bc00ff',
+        persona: 'un Líder de ingeniería Mobile. Revisas diseño responsive, soporte PWA, rendimiento en dispositivos y paridad cross-platform.'
+    },
+    {
+        key: 'QA', title: 'QA · Quality', icon: '🧪', color: '#ff5599',
+        persona: 'un Ingeniero QA senior. Detectas edge cases, huecos de cobertura de pruebas, regresiones y riesgos de robustez.'
+    },
+    {
+        key: 'DATA', title: 'Data · Analytics', icon: '📊', color: '#55ddff',
+        persona: 'un Analista de Datos. Interpretas telemetría, defines métricas clave (KPIs) y detectas anomalías o sesgos en los datos.'
+    }
+];
+
+/**
+ * BoardAgent: Generic advisory-board agent driven by a BOARD_ROLES entry.
+ * Renders role-specific findings into its own panel with one-click GitHub Issue.
+ */
+export class BoardAgent {
+    constructor(role, mountId) {
+        this.role = role;
+        this.panel = document.getElementById(mountId);
+    }
+
+    reset() {
+        if (this.panel) {
+            this.panel.innerHTML = `<div class="board-placeholder">Awaiting ${this.role.title} review...</div>`;
+        }
+    }
+
+    report(message, source = 'LOCAL') {
+        if (!this.panel) return;
+
+        const card = document.createElement('div');
+        card.className = `board-card source-${source.toLowerCase()}`;
+        card.style.setProperty('--role-color', this.role.color);
+        card.innerHTML = `
+            <div class="board-card-main">
+                <div class="board-card-top">
+                    <span class="board-source">[${source}]</span>
+                    <span class="board-role">${this.role.icon} ${this.role.key}</span>
+                </div>
+                <span class="board-msg">${message}</span>
+            </div>
+            <button class="action-btn github-small" title="Raise GitHub Issue">🚀</button>
+        `;
+
+        if (this.panel.querySelector('.board-placeholder')) {
+            this.panel.innerHTML = '';
+        }
+
+        this.panel.prepend(card);
+        card.querySelector('.github-small').addEventListener('click', () => {
+            Bus.emit('devops_action', {
+                type: 'GITHUB_ISSUE',
+                title: `[ANTGR-${this.role.key}] ${this.role.title} Finding`,
+                body: `Source: ${source}\nAgent: ${this.role.title}\nFinding: ${message}`
+            });
+        });
+
+        // Keep the panel focused on the latest consensus
+        if (this.panel.children.length > 4) this.panel.lastElementChild.remove();
+    }
+
+    async askAI(context) {
+        const prompt = `Actúa como ${this.role.persona}
+Analiza este evento de la misión Antigravity: "${context}".
+Entrega UNA recomendación crítica, accionable y concreta (máximo 18 palabras).
+Responde en texto plano, sin markdown ni viñetas.`;
+        Bridge.sendAIRequest(this.role.key, prompt);
     }
 }

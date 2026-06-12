@@ -2,12 +2,13 @@ import { State } from './modules/State.js';
 import { Bus } from './modules/Bus.js';
 import { Bridge } from './modules/Bridge.js';
 import { MissionLogger, TerminalManager, Sparkline } from './modules/Logger.js';
-import { CTOAuditor, UXExpert, PredictiveInsightAgent } from './modules/Agents.js';
+import { CTOAuditor, UXExpert, PredictiveInsightAgent, BoardAgent, BOARD_ROLES } from './modules/Agents.js';
 
 // --- Initialization ---
 
 let Logger, Terminal, Auditor, UX, Insights, DevOpsTerminal;
 let tokenSpark, costSpark, securitySpark;
+const Board = {}; // key -> BoardAgent instance
 
 document.addEventListener('DOMContentLoaded', init);
 
@@ -18,6 +19,9 @@ async function init() {
     Auditor = new CTOAuditor('cto-panel', 'cto-status');
     UX = new UXExpert('ux-recommendations', 'ux-score');
     Insights = new PredictiveInsightAgent('insights-panel');
+
+    // Activate the Advisory Board: build a panel per role and wire its agent.
+    initAdvisoryBoard();
 
     // Initialize Sparklines
     tokenSpark = new Sparkline('tokens-sparkline', '#00f2ff');
@@ -217,7 +221,39 @@ function handleAIResponse(data) {
     } else if (data.agent === 'INSIGHTS') {
         Insights.report(data.response, source);
         autoExpandNode('insights');
+    } else if (Board[data.agent]) {
+        Board[data.agent].report(data.response, source);
+        document.getElementById('advisory-board-node')?.classList.add('expanded');
+        const statusEl = document.getElementById('board-status');
+        if (statusEl) statusEl.textContent = 'CONSENSUS LIVE';
     }
+}
+
+// Build the Advisory Board UI (one panel per role) and instantiate its agents.
+function initAdvisoryBoard() {
+    const mount = document.getElementById('advisory-board');
+    if (!mount) return;
+    mount.innerHTML = '';
+
+    BOARD_ROLES.forEach(role => {
+        const panelId = `board-panel-${role.key}`;
+        const cell = document.createElement('div');
+        cell.className = 'board-cell';
+        cell.style.setProperty('--role-color', role.color);
+        cell.innerHTML = `
+            <div class="board-cell-header">
+                <span class="board-cell-icon">${role.icon}</span>
+                <span class="board-cell-title">${role.title}</span>
+            </div>
+            <div id="${panelId}" class="board-panel">
+                <div class="board-placeholder">Awaiting ${role.title} review...</div>
+            </div>
+        `;
+        mount.appendChild(cell);
+        Board[role.key] = new BoardAgent(role, panelId);
+    });
+
+    Bus.emit('log', { msg: `Advisory Board online: ${BOARD_ROLES.map(r => r.key).join(', ')} + CTO, UX.`, type: 'success' });
 }
 
 async function runWorkspaceSync() {
@@ -234,6 +270,11 @@ async function runWorkspaceSync() {
 
     Bus.emit('cto_audit_start');
     Bus.emit('ux_audit_start');
+
+    // Wake the full Advisory Board for this mission cycle.
+    Object.values(Board).forEach(agent => agent.reset());
+    const boardStatus = document.getElementById('board-status');
+    if (boardStatus) boardStatus.textContent = 'DELIBERATING...';
 
     const sequence = [
         { msg: 'Initiating deep-scan protocol...', type: 'system', delay: 400, tokens: 450, term: 'IO_INIT_0xFA32' },
@@ -295,6 +336,14 @@ async function runWorkspaceSync() {
         // Trigger insights
         if (Insights) Insights.askAI(`${step.msg} (Term: ${step.term})`);
 
+        // Fan out to the Advisory Board (round-robin so every role weighs in
+        // across the mission cycle without flooding the Brain Bridge).
+        const stepIndex = sequence.indexOf(step);
+        const roleA = BOARD_ROLES[(stepIndex * 2) % BOARD_ROLES.length];
+        const roleB = BOARD_ROLES[(stepIndex * 2 + 1) % BOARD_ROLES.length];
+        Board[roleA.key]?.askAI(step.msg);
+        Board[roleB.key]?.askAI(`${step.msg} (Term: ${step.term})`);
+
         State.progress += (100 / sequence.length);
         State.tokens += step.tokens;
         State.cost = (State.tokens / 1000) * 0.002;
@@ -306,6 +355,8 @@ async function runWorkspaceSync() {
     }
 
     Bus.emit('cto_audit_stop');
+    const boardStatusEnd = document.getElementById('board-status');
+    if (boardStatusEnd) boardStatusEnd.textContent = 'BOARD READY';
     Bus.emit('log', { msg: 'Sync completed. All systems nominal.', type: 'success' });
 
     State.isScanning = false;
