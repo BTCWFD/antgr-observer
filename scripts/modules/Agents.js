@@ -307,4 +307,17 @@ Entrega UNA recomendación crítica, accionable y concreta (máximo 18 palabras)
 Responde en texto plano, sin markdown ni viñetas.`;
         Bridge.sendAIRequest(this.role.key, prompt);
     }
+
+    // Resilience: if no finding arrived (Bridge offline / brain unavailable),
+    // turn the placeholder into a clear "no response" note. Keeps the
+    // .board-placeholder class so a late report() still clears it. No-op once
+    // any card has rendered.
+    showFallbackIfEmpty() {
+        if (!this.panel) return;
+        const ph = this.panel.querySelector('.board-placeholder');
+        if (ph) {
+            ph.textContent = 'No response — Bridge offline or brain unavailable.';
+            ph.classList.add('board-fallback');
+        }
+    }
 }

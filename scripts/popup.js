@@ -471,6 +471,17 @@ async function runWorkspaceSync() {
     History.render();
     updateConsensus();
 
+    // Resilience watchdog: after a grace period, surface a clear fallback on any
+    // board panel that never received a response (Bridge offline / brain down),
+    // instead of leaving it stuck on the "Awaiting review" placeholder.
+    setTimeout(() => {
+        Object.values(Board).forEach(agent => agent.showFallbackIfEmpty());
+        if (BoardMemory.getCurrent().length === 0) {
+            const statusEl = document.getElementById('board-status');
+            if (statusEl) statusEl.textContent = 'NO BRAIN RESPONSE';
+        }
+    }, 4000);
+
     Bus.emit('log', { msg: 'Sync completed. All systems nominal.', type: 'success' });
 
     State.isScanning = false;

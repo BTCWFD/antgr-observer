@@ -807,6 +807,13 @@ input:checked+.slider:before {
   opacity: 0.7;
 }
 
+/* Resilience fallback: shown when a panel got no brain response in time. */
+.board-placeholder.board-fallback {
+  color: #ffaa00;
+  opacity: 0.9;
+  font-style: normal;
+}
+
 .board-card {
   display: flex;
   align-items: flex-start;
