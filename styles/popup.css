@@ -869,3 +869,56 @@ input:checked+.slider:before {
   line-height: 1.3;
   color: var(--text-main);
 }
+
+/* ===== Advisory Board · Narrow Popup Responsiveness ===== */
+/* On very narrow popups the 2-column board crowds 9 role cells.
+   Collapse to a single readable column and tighten density.
+   Theme, colors and CSS variables are intentionally left untouched. */
+@media (max-width: 380px) {
+  .advisory-board {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  /* Density polish: a single-column stack of 9 roles must not run too tall. */
+  .board-cell {
+    padding: 7px;
+    min-height: 56px;
+  }
+
+  .board-cell-header {
+    margin-bottom: 5px;
+    padding-bottom: 5px;
+  }
+
+  .board-cell-title {
+    font-size: 0.56rem;
+    letter-spacing: 0.4px;
+  }
+
+  .board-cell-icon {
+    font-size: 0.85rem;
+  }
+
+  .board-panel {
+    max-height: 120px;
+  }
+
+  .board-msg {
+    font-size: 0.66rem;
+  }
+}
+
+/* ===== Touch ergonomics ===== */
+/* Bump board/action button hit areas only on coarse pointers (touch),
+   so mouse users keep the compact desktop look while touch users get
+   targets that meet the 44px Apple/Material minimum. */
+@media (pointer: coarse) {
+
+  .github-small,
+  .action-btn {
+    min-width: 44px;
+    min-height: 44px;
+    padding: 10px;
+  }
+}

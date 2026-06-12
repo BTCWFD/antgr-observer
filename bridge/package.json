@@ -4,7 +4,8 @@
     "main": "server.js",
     "scripts": {
         "start": "node server.js",
-        "build:exe": "pkg . --targets node18-win-x64 --output antigravity-bridge"
+        "build:exe": "pkg . --targets node18-win-x64 --output antigravity-bridge",
+        "test": "node --test test/*.test.js"
     },
     "dependencies": {
         "dotenv": "^17.2.3",
