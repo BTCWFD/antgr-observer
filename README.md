@@ -3,6 +3,8 @@
   
   # ANTIGRAVITY OBSERVER
 **God-Tier AI Mission Control for Autonomous Agent Operations**
+
+[![CI](https://github.com/BTCWFD/antgr-observer/actions/workflows/ci.yml/badge.svg)](https://github.com/BTCWFD/antgr-observer/actions/workflows/ci.yml)
 </div>
 
 ---
