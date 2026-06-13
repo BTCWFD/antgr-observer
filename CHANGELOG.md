@@ -23,6 +23,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **GENERATE STRONG TOKEN** button — `crypto.getRandomValues`-based token.
 - **CI** — GitHub Actions workflow (`node --check` sweep + conditional bridge
   tests) and a `node:test` regression suite for the privacy gate.
+- **XSS regression tests** (jsdom) — load the real Advisory Board render methods
+  in a DOM and assert malicious LLM payloads render as inert text, never as
+  injected element nodes; wired into CI.
 - **`bridge/.env.example`** — committable, secret-free env template.
 
 ### Changed

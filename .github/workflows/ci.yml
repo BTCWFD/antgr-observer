@@ -33,6 +33,12 @@ jobs:
             done
           fi
 
+      - name: Install frontend dependencies
+        run: npm ci || npm install
+
+      - name: Run frontend tests (jsdom)
+        run: npm test
+
       - name: Install bridge dependencies
         working-directory: bridge
         run: npm ci || npm install

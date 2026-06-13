@@ -1,0 +1,13 @@
+{
+  "name": "antgr-observer",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Antigravity Observer — frontend (MV3 extension) test harness.",
+  "scripts": {
+    "test": "node --test test/*.test.js"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.0"
+  }
+}
